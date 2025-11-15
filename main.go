@@ -83,11 +83,13 @@ func parseArgs() Config {
 		AbsenceLimit: 180,
 	}
 
-	customDate := flag.String("date", "", "Use a specific date for calculation instead of today (format: dd.mm.yyyy)")
-	windowMonths := flag.Int("window", 12, "Rolling window period in months")
-	absenceLimit := flag.Int("limit", 180, "Maximum allowed absence days in window")
+	// Create a new FlagSet to allow flags after positional arguments
+	fs := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+	customDate := fs.String("date", "", "Use a specific date for calculation instead of today (format: dd.mm.yyyy)")
+	windowMonths := fs.Int("window", 12, "Rolling window period in months")
+	absenceLimit := fs.Int("limit", 180, "Maximum allowed absence days in window")
 
-	flag.Usage = func() {
+	fs.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Error: CSV file argument is required.\n\n")
 		fmt.Fprintf(os.Stderr, "Usage: %s <csv_file> [options]\n\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "Options:\n")
@@ -101,15 +103,34 @@ func parseArgs() Config {
 		fmt.Fprintf(os.Stderr, "  %s trips.csv --date 01.01.2026 --window 6 --limit 90\n\n", os.Args[0])
 	}
 
-	flag.Parse()
+	// Manually separate filename and flags
+	var filename string
+	var flagArgs []string
 
-	// Check for positional argument (filename)
-	if flag.NArg() < 1 {
-		flag.Usage()
+	for i := 1; i < len(os.Args); i++ {
+		arg := os.Args[i]
+		if strings.HasPrefix(arg, "-") {
+			flagArgs = append(flagArgs, arg)
+			// Check if next arg is a flag value (doesn't start with -)
+			if i+1 < len(os.Args) && !strings.HasPrefix(os.Args[i+1], "-") {
+				i++
+				flagArgs = append(flagArgs, os.Args[i])
+			}
+		} else if filename == "" {
+			filename = arg
+		}
+	}
+
+	// Parse flags
+	fs.Parse(flagArgs)
+
+	// Check for filename
+	if filename == "" {
+		fs.Usage()
 		os.Exit(1)
 	}
 
-	config.Filename = flag.Arg(0)
+	config.Filename = filename
 	config.CustomDate = *customDate
 	config.WindowMonths = *windowMonths
 	config.AbsenceLimit = *absenceLimit
@@ -328,7 +349,7 @@ func displayCurrentStatus(trips []Trip, config Config) {
 	var err error
 
 	if config.CustomDate != "" {
-		targetDate, err = time.Parse("02.01.2006", config.CustomDate)
+		targetDate, err = parseDate(config.CustomDate)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: Invalid date format for --date parameter. Use format: dd.mm.yyyy\n")
 			os.Exit(1)

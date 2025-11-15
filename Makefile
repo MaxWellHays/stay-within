@@ -18,7 +18,7 @@ all: clean build-macos-arm build-macos-intel build-windows
 # Clean build directory
 clean:
 	@echo "Cleaning build directory..."
-	@rm -rf $(BUILD_DIR)
+	@rm -f $(BUILD_DIR)/stay-within*
 	@mkdir -p $(BUILD_DIR)
 
 # Build for macOS Apple Silicon (M1/M2/M3)
