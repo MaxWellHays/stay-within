@@ -1,0 +1,50 @@
+.trip-table-wrapper h3 {
+    margin: 0 0 12px 0;
+    font-size: 1em;
+    color: #333;
+}
+
+.table-scroll {
+    overflow-x: auto;
+}
+
+.trip-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+}
+
+.trip-table th,
+.trip-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.trip-table th {
+    background: #f9fafb;
+    font-weight: 600;
+    color: #555;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.trip-table .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.trip-table tr:hover {
+    background: #f9fafb;
+}
+
+.trip-table tr.exceeded {
+    background: #fef2f2;
+}
+
+.trip-table .warning {
+    color: #dc2626;
+    font-weight: 600;
+}

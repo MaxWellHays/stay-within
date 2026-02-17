@@ -1,0 +1,29 @@
+<div class="trip-table-wrapper">
+    <h3>Per-Trip Analysis (Rolling {{ windowMonths() }}-Month Window)</h3>
+    <div class="table-scroll">
+        <table class="trip-table">
+            <thead>
+                <tr>
+                    <th>Trip Start</th>
+                    <th>Trip End</th>
+                    <th class="num">Days</th>
+                    <th class="num">Days in Window</th>
+                    <th class="num">Days Remaining</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (row of rows(); track $index) {
+                <tr [class.exceeded]="row.daysRemaining < 0">
+                    <td>{{ fmt(row.trip.start) }}</td>
+                    <td>{{ fmt(row.trip.end) }}</td>
+                    <td class="num">{{ row.trip.days }}</td>
+                    <td class="num">{{ row.daysInWindow }}</td>
+                    <td class="num" [class.warning]="row.daysRemaining < 0">
+                        {{ row.daysRemaining }}
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,46 @@
+<div class="config-bar">
+    <div class="presets">
+        <span class="presets-label">Presets:</span>
+        @for (preset of presets; track preset.label) {
+        <button
+            class="preset-btn"
+            [class.active]="windowMonths() === preset.window && absenceLimit() === preset.limit"
+            (click)="applyPreset(preset)"
+        >
+            {{ preset.label }}
+        </button>
+        }
+    </div>
+
+    <div class="fields">
+        <label class="field">
+            <span>Window (months)</span>
+            <input
+                type="number"
+                min="1"
+                [(ngModel)]="windowMonths"
+                (ngModelChange)="emitConfig()"
+            />
+        </label>
+
+        <label class="field">
+            <span>Absence limit (days)</span>
+            <input
+                type="number"
+                min="1"
+                [(ngModel)]="absenceLimit"
+                (ngModelChange)="emitConfig()"
+            />
+        </label>
+
+        <label class="field">
+            <span>Custom date</span>
+            <input
+                type="text"
+                placeholder="dd.mm.yyyy"
+                [(ngModel)]="customDateStr"
+                (ngModelChange)="emitConfig()"
+            />
+        </label>
+    </div>
+</div>

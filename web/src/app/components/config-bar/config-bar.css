@@ -1,0 +1,66 @@
+.config-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.presets {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.presets-label {
+    font-weight: 600;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.preset-btn {
+    padding: 6px 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #f8f8f8;
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: all 0.15s;
+}
+
+.preset-btn:hover {
+    background: #e8e8e8;
+}
+
+.preset-btn.active {
+    background: #2563eb;
+    color: white;
+    border-color: #2563eb;
+}
+
+.fields {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85em;
+    color: #555;
+}
+
+.field input {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    width: 140px;
+}
+
+.field input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}

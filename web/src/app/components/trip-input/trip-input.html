@@ -1,0 +1,28 @@
+<div class="trip-input">
+    <div class="input-header">
+        <span class="input-label">Trip data (CSV or paste from spreadsheet)</span>
+        <div class="input-actions">
+            <button class="btn btn-sm" (click)="loadExample()">Load Example</button>
+            <button class="btn btn-sm" (click)="onFileClick()">Upload CSV</button>
+            <input
+                #fileInput
+                type="file"
+                accept=".csv,.tsv,.txt"
+                hidden
+                (change)="onFileSelected($event)"
+            />
+        </div>
+    </div>
+
+    <textarea
+        class="trip-textarea"
+        [class.drag-over]="dragOver"
+        placeholder="Paste your trip data here (Start date, End date)&#10;&#10;Example:&#10;25.05.2023,10.08.2023&#10;15.09.2023,20.09.2023&#10;&#10;Or drag and drop a CSV file"
+        rows="12"
+        [(ngModel)]="tripText"
+        (ngModelChange)="onTextChange()"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave()"
+        (drop)="onDrop($event)"
+    ></textarea>
+</div>

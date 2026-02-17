@@ -1,0 +1,52 @@
+<div class="status-card" [class]="'status-' + status().status">
+    <div class="status-header">
+        @if (status().isCustomDate) {
+        <h3>Estimated Status — as of {{ fmt(status().targetDate) }}</h3>
+        } @else {
+        <h3>Current Status — as of Today</h3>
+        }
+    </div>
+
+    <div class="status-details">
+        <div class="detail-row">
+            <span class="detail-label"
+                >{{ status().isCustomDate ? 'Estimated date' : "Today's date" }}</span
+            >
+            <span class="detail-value">{{ fmt(status().targetDate) }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Last trip ended</span>
+            <span class="detail-value">{{ fmt(status().lastTripEnd) }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Days at home since last trip</span>
+            <span class="detail-value">{{ status().daysSinceLastTrip }} days</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Rolling window</span>
+            <span class="detail-value"
+                >{{ fmt(status().windowStart) }} — {{ fmt(status().windowEnd) }}</span
+            >
+        </div>
+    </div>
+
+    <div class="progress-section">
+        <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="progressPercent()"></div>
+        </div>
+        <div class="progress-labels">
+            <span class="days-used">{{ status().totalDaysOutside }} days outside</span>
+            <span class="days-remaining">{{ status().daysRemaining }} days remaining</span>
+        </div>
+    </div>
+
+    <div class="status-message">
+        @switch (status().status) { @case ('ok') {
+        <span>Within the {{ status().totalDaysOutside + status().daysRemaining }}-day limit.</span>
+        } @case ('caution') {
+        <span>Caution: Running low on remaining days.</span>
+        } @case ('exceeded') {
+        <span>Exceeded the limit by {{ -status().daysRemaining }} days!</span>
+        } }
+    </div>
+</div>

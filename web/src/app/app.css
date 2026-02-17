@@ -1,0 +1,25 @@
+.app-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+}
+
+.app-header {
+    margin-bottom: 24px;
+}
+
+.app-header h1 {
+    margin: 0 0 4px 0;
+    font-size: 1.6em;
+    color: #111;
+}
+
+.app-header p {
+    margin: 0;
+    color: #666;
+    font-size: 0.95em;
+}
+
+.section {
+    margin-bottom: 24px;
+}

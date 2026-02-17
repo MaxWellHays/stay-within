@@ -1,0 +1,113 @@
+.status-card {
+    border-radius: 8px;
+    padding: 20px;
+    border: 2px solid;
+}
+
+.status-ok {
+    border-color: #22c55e;
+    background: #f0fdf4;
+}
+
+.status-caution {
+    border-color: #f59e0b;
+    background: #fffbeb;
+}
+
+.status-exceeded {
+    border-color: #ef4444;
+    background: #fef2f2;
+}
+
+.status-header h3 {
+    margin: 0 0 16px 0;
+    font-size: 1.1em;
+}
+
+.status-ok .status-header h3 {
+    color: #16a34a;
+}
+.status-caution .status-header h3 {
+    color: #d97706;
+}
+.status-exceeded .status-header h3 {
+    color: #dc2626;
+}
+
+.status-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 24px;
+    margin-bottom: 16px;
+    font-size: 0.9em;
+}
+
+.detail-label {
+    color: #666;
+}
+
+.detail-value {
+    font-weight: 600;
+    text-align: right;
+}
+
+.progress-section {
+    margin-bottom: 12px;
+}
+
+.progress-bar {
+    height: 12px;
+    background: #e5e7eb;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.3s ease;
+}
+
+.status-ok .progress-fill {
+    background: #22c55e;
+}
+.status-caution .progress-fill {
+    background: #f59e0b;
+}
+.status-exceeded .progress-fill {
+    background: #ef4444;
+}
+
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8em;
+    color: #666;
+}
+
+.status-message {
+    font-weight: 600;
+    font-size: 0.95em;
+    padding-top: 4px;
+}
+
+.status-ok .status-message {
+    color: #16a34a;
+}
+.status-caution .status-message {
+    color: #d97706;
+}
+.status-exceeded .status-message {
+    color: #dc2626;
+}
+
+@media (max-width: 500px) {
+    .status-details {
+        grid-template-columns: 1fr;
+    }
+
+    .detail-value {
+        text-align: left;
+    }
+}
