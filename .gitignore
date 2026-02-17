@@ -14,3 +14,8 @@
 
 # Go workspace file
 go.work
+
+# Web app
+web/node_modules/
+web/.angular/
+web/dist/

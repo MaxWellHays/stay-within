@@ -63,7 +63,7 @@ deps:
 
 # Run the application (for development)
 run:
-	@go run . trips.csv
+	@go run . ../trips.csv
 
 # Display build information
 info:
