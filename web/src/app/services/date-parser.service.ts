@@ -6,13 +6,33 @@ interface DateFormat {
 }
 
 const MONTHS_SHORT: Record<string, number> = {
-  jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
-  jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
+  jan: 1,
+  feb: 2,
+  mar: 3,
+  apr: 4,
+  may: 5,
+  jun: 6,
+  jul: 7,
+  aug: 8,
+  sep: 9,
+  oct: 10,
+  nov: 11,
+  dec: 12,
 };
 
 const MONTHS_LONG: Record<string, number> = {
-  january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
-  july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
+  january: 1,
+  february: 2,
+  march: 3,
+  april: 4,
+  may: 5,
+  june: 6,
+  july: 7,
+  august: 8,
+  september: 9,
+  october: 10,
+  november: 11,
+  december: 12,
 };
 
 /**
@@ -85,14 +105,13 @@ const HEADER_KEYWORDS = ['start', 'end', 'begin', 'from', 'to', 'departure', 'ar
 
 function isValidDate(year: number, month: number, day: number): boolean {
   if (month < 1 || month > 12 || day < 1) return false;
-  // Use Date to check day validity: construct and verify components match
-  const d = new Date(year, month - 1, day);
-  return d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day;
+  // Use UTC Date to check day validity, avoiding DST issues
+  const d = new Date(Date.UTC(year, month - 1, day));
+  return d.getUTCFullYear() === year && d.getUTCMonth() === month - 1 && d.getUTCDate() === day;
 }
 
 @Injectable({ providedIn: 'root' })
 export class DateParserService {
-
   parseDate(dateStr: string): Date | null {
     const trimmed = dateStr.trim();
     if (!trimmed) return null;
@@ -107,8 +126,8 @@ export class DateParserService {
       const { year, month, day } = parts;
       if (!isValidDate(year, month, day)) continue;
 
-      // Always construct with local timezone, never Date.parse()
-      return new Date(year, month - 1, day);
+      // Always construct as UTC to avoid DST issues in day arithmetic
+      return new Date(Date.UTC(year, month - 1, day));
     }
 
     return null;
@@ -134,9 +153,9 @@ export class DateParserService {
   }
 
   formatDate(date: Date): string {
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const year = date.getUTCFullYear();
     return `${day}.${month}.${year}`;
   }
 }

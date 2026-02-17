@@ -5,15 +5,14 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 @Injectable({ providedIn: 'root' })
 export class CalculatorService {
-
   /**
    * Add months to a date with day-overflow clamping.
    * Matches Go implementation exactly — does NOT use Date.setMonth().
    */
   addMonths(date: Date, months: number): Date {
-    let year = date.getFullYear();
-    let month = date.getMonth() + 1 + months; // 1-based month
-    const day = date.getDate();
+    let year = date.getUTCFullYear();
+    let month = date.getUTCMonth() + 1 + months; // 1-based month
+    const day = date.getUTCDate();
 
     // Normalize year and month (matching Go's loop logic)
     while (month > 12) {
@@ -25,11 +24,11 @@ export class CalculatorService {
       year--;
     }
 
-    // Get max days in target month (day 0 of next month = last day of this month)
-    const maxDay = new Date(year, month, 0).getDate();
+    // Get max days in target month (UTC day 0 of next month = last day of this month)
+    const maxDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
     const clampedDay = Math.min(day, maxDay);
 
-    return new Date(year, month - 1, clampedDay);
+    return new Date(Date.UTC(year, month - 1, clampedDay));
   }
 
   /**
@@ -48,7 +47,8 @@ export class CalculatorService {
       const overlapEnd = trip.end < windowEnd ? trip.end : windowEnd;
 
       // Inclusive day count
-      const daysInOverlap = Math.floor((overlapEnd.getTime() - overlapStart.getTime()) / MS_PER_DAY) + 1;
+      const daysInOverlap =
+        Math.floor((overlapEnd.getTime() - overlapStart.getTime()) / MS_PER_DAY) + 1;
 
       totalDays += daysInOverlap;
     }
@@ -61,7 +61,7 @@ export class CalculatorService {
    * For each trip, calculates days in the rolling window ending on that trip's end date.
    */
   analyzeTrips(trips: Trip[], config: Config): AnalysisRow[] {
-    return trips.map(trip => {
+    return trips.map((trip) => {
       const windowStart = this.addMonths(trip.end, -config.windowMonths);
       const daysInWindow = this.calculateDaysInWindow(trips, windowStart, trip.end);
       const daysRemaining = config.absenceLimit - daysInWindow;
@@ -75,18 +75,16 @@ export class CalculatorService {
    * Matches Go's displayCurrentStatus logic.
    */
   calculateStatus(trips: Trip[], config: Config): StatusResult {
-    const targetDate = config.customDate ?? new Date(
-      new Date().getFullYear(),
-      new Date().getMonth(),
-      new Date().getDate()
-    );
+    const now = new Date();
+    const targetDate =
+      config.customDate ?? new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 
     const windowStart = this.addMonths(targetDate, -config.windowMonths);
     const lastTrip = trips[trips.length - 1];
 
     // Days since last trip: int(targetDate.Sub(lastTrip.End).Hours() / 24)
     const daysSinceLastTrip = Math.floor(
-      (targetDate.getTime() - lastTrip.end.getTime()) / MS_PER_DAY
+      (targetDate.getTime() - lastTrip.end.getTime()) / MS_PER_DAY,
     );
 
     const totalDaysOutside = this.calculateDaysInWindow(trips, windowStart, targetDate);
