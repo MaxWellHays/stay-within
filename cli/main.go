@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -25,6 +26,7 @@ type Config struct {
 	CustomDate   string
 	WindowMonths int
 	AbsenceLimit int
+	JsonOutput   bool
 }
 
 // Supported date formats for parsing
@@ -69,11 +71,15 @@ func main() {
 		return trips[i].End.Before(trips[j].End)
 	})
 
-	// Display per-trip analysis
-	displayTripAnalysis(trips, config)
+	if config.JsonOutput {
+		outputJSON(trips, config)
+	} else {
+		// Display per-trip analysis
+		displayTripAnalysis(trips, config)
 
-	// Display current/estimated status
-	displayCurrentStatus(trips, config)
+		// Display current/estimated status
+		displayCurrentStatus(trips, config)
+	}
 }
 
 // parseArgs parses command-line arguments
@@ -88,6 +94,7 @@ func parseArgs() Config {
 	customDate := fs.String("date", "", "Use a specific date for calculation instead of today (format: dd.mm.yyyy)")
 	windowMonths := fs.Int("window", 12, "Rolling window period in months")
 	absenceLimit := fs.Int("limit", 180, "Maximum allowed absence days in window")
+	jsonOutput := fs.Bool("json", false, "Output results as JSON")
 
 	fs.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Error: CSV file argument is required.\n\n")
@@ -134,6 +141,7 @@ func parseArgs() Config {
 	config.CustomDate = *customDate
 	config.WindowMonths = *windowMonths
 	config.AbsenceLimit = *absenceLimit
+	config.JsonOutput = *jsonOutput
 
 	// Validate window and limit
 	if config.WindowMonths <= 0 {
@@ -301,6 +309,101 @@ func minTime(a, b time.Time) time.Time {
 		return a
 	}
 	return b
+}
+
+// outputJSON outputs results as JSON
+func outputJSON(trips []Trip, config Config) {
+	type jsonTrip struct {
+		Start        string `json:"start"`
+		End          string `json:"end"`
+		Days         int    `json:"days"`
+		DaysInWindow int    `json:"daysInWindow"`
+		DaysRemaining int   `json:"daysRemaining"`
+	}
+
+	type jsonStatus struct {
+		TargetDate       string `json:"targetDate"`
+		LastTripEnd      string `json:"lastTripEnd"`
+		DaysSinceLastTrip int   `json:"daysSinceLastTrip"`
+		WindowStart      string `json:"windowStart"`
+		WindowEnd        string `json:"windowEnd"`
+		TotalDaysOutside int    `json:"totalDaysOutside"`
+		DaysRemaining    int    `json:"daysRemaining"`
+		Status           string `json:"status"`
+	}
+
+	type jsonOutput struct {
+		Config struct {
+			WindowMonths int `json:"windowMonths"`
+			AbsenceLimit int `json:"absenceLimit"`
+		} `json:"config"`
+		Trips  []jsonTrip `json:"trips"`
+		Status jsonStatus `json:"status"`
+	}
+
+	var output jsonOutput
+	output.Config.WindowMonths = config.WindowMonths
+	output.Config.AbsenceLimit = config.AbsenceLimit
+
+	// Build trip analysis
+	for _, trip := range trips {
+		windowStart := addMonths(trip.End, -config.WindowMonths)
+		totalDaysInWindow := calculateDaysInWindow(trips, windowStart, trip.End)
+		remainingDays := config.AbsenceLimit - totalDaysInWindow
+
+		output.Trips = append(output.Trips, jsonTrip{
+			Start:        trip.Start.Format("02.01.2006"),
+			End:          trip.End.Format("02.01.2006"),
+			Days:         trip.Days,
+			DaysInWindow: totalDaysInWindow,
+			DaysRemaining: remainingDays,
+		})
+	}
+
+	// Build status
+	var targetDate time.Time
+	if config.CustomDate != "" {
+		var err error
+		targetDate, err = parseDate(config.CustomDate)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: Invalid date format for --date parameter.\n")
+			os.Exit(1)
+		}
+	} else {
+		targetDate = time.Now()
+	}
+
+	windowStart := addMonths(targetDate, -config.WindowMonths)
+	lastTrip := trips[len(trips)-1]
+	daysInUK := int(targetDate.Sub(lastTrip.End).Hours() / 24)
+	totalDaysOutside := calculateDaysInWindow(trips, windowStart, targetDate)
+	remainingDays := config.AbsenceLimit - totalDaysOutside
+	warningThreshold := int(math.Min(30, math.Ceil(float64(config.AbsenceLimit)*0.15)))
+
+	statusStr := "ok"
+	if remainingDays < 0 {
+		statusStr = "exceeded"
+	} else if remainingDays < warningThreshold {
+		statusStr = "caution"
+	}
+
+	output.Status = jsonStatus{
+		TargetDate:       targetDate.Format("02.01.2006"),
+		LastTripEnd:      lastTrip.End.Format("02.01.2006"),
+		DaysSinceLastTrip: daysInUK,
+		WindowStart:      windowStart.Format("02.01.2006"),
+		WindowEnd:        targetDate.Format("02.01.2006"),
+		TotalDaysOutside: totalDaysOutside,
+		DaysRemaining:    remainingDays,
+		Status:           statusStr,
+	}
+
+	encoder := json.NewEncoder(os.Stdout)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(output); err != nil {
+		fmt.Fprintf(os.Stderr, "Error encoding JSON: %v\n", err)
+		os.Exit(1)
+	}
 }
 
 // displayTripAnalysis displays per-trip analysis
