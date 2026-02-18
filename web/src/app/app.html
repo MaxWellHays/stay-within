@@ -1,24 +1,32 @@
 <div class="app-container">
-    <header class="app-header">
-        <h1>Stay Within</h1>
-        <p>Track your days abroad to stay compliant with visa and residency rules.</p>
-    </header>
+  <header class="app-header">
+    <h1>Stay Within</h1>
+    <p>Track your days abroad to stay compliant with visa and residency rules.</p>
+  </header>
 
-    <section class="section">
-        <app-config-bar (configChanged)="onConfigChanged($event)" />
-    </section>
+  <section class="section">
+    <app-config-bar (configChanged)="onConfigChanged($event)" />
+  </section>
 
-    <section class="section">
-        <app-trip-input (textChanged)="onTextChanged($event)" />
-    </section>
+  <section class="section">
+    <app-trip-input [tripText]="tripText()" (textChanged)="onTextChanged($event)" />
+  </section>
 
-    @if (statusResult(); as status) {
+  @if (parseError(); as error) {
     <section class="section">
-        <app-status-card [status]="status" />
+      <div class="parse-error">{{ error }}</div>
     </section>
-    } @if (analysisRows().length > 0) {
+  }
+
+  @if (statusResult(); as status) {
     <section class="section">
-        <app-trip-table [rows]="analysisRows()" [windowMonths]="windowMonths()" />
+      <app-status-card [status]="status" />
     </section>
-    }
+  }
+
+  @if (analysisRows().length > 0) {
+    <section class="section">
+      <app-trip-table [rows]="analysisRows()" [windowMonths]="windowMonths()" />
+    </section>
+  }
 </div>

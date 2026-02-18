@@ -1,16 +1,19 @@
 .app-container {
     max-width: 800px;
     margin: 0 auto;
-    padding: 24px 16px 48px;
+    padding: 24px 16px 64px;
 }
 
 .app-header {
-    margin-bottom: 24px;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e5e7eb;
 }
 
 .app-header h1 {
     margin: 0 0 4px 0;
-    font-size: 1.6em;
+    font-size: 1.8em;
+    font-weight: 700;
     color: #111;
 }
 
@@ -22,4 +25,14 @@
 
 .section {
     margin-bottom: 24px;
+}
+
+.parse-error {
+    padding: 12px 16px;
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    border-radius: 6px;
+    color: #dc2626;
+    font-size: 0.9em;
+    line-height: 1.5;
 }

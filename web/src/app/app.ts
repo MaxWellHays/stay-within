@@ -1,4 +1,4 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, computed, effect, signal } from '@angular/core';
 import { ConfigBar } from './components/config-bar/config-bar';
 import { TripInput } from './components/trip-input/trip-input';
 import { StatusCard } from './components/status-card/status-card';
@@ -6,6 +6,8 @@ import { TripTable } from './components/trip-table/trip-table';
 import { Config, Trip, AnalysisRow, StatusResult } from './models/trip.model';
 import { CsvParserService } from './services/csv-parser.service';
 import { CalculatorService } from './services/calculator.service';
+
+const STORAGE_KEY = 'stay-within-trip-data';
 
 @Component({
   selector: 'app-root',
@@ -15,18 +17,35 @@ import { CalculatorService } from './services/calculator.service';
 })
 export class App {
   private config = signal<Config>({ windowMonths: 12, absenceLimit: 180 });
-  private tripText = signal('');
+  protected tripText = signal(localStorage.getItem(STORAGE_KEY) ?? '');
 
   constructor(
     private csvParser: CsvParserService,
     private calculator: CalculatorService,
-  ) {}
+  ) {
+    // Persist trip text to localStorage whenever it changes
+    effect(() => {
+      localStorage.setItem(STORAGE_KEY, this.tripText());
+    });
+  }
 
-  protected trips = computed<Trip[]>(() => {
+  private parsedResult = computed<{ trips: Trip[]; error: string | null }>(() => {
     const text = this.tripText();
-    if (!text.trim()) return [];
-    return this.csvParser.parseTripsFromText(text);
+    if (!text.trim()) return { trips: [], error: null };
+    const trips = this.csvParser.parseTripsFromText(text);
+    if (trips.length === 0) {
+      return {
+        trips: [],
+        error:
+          'No valid trips found. Make sure each row has a start and end date ' +
+          '(e.g. 25.05.2023,10.08.2023). Supported formats: dd.mm.yyyy, yyyy-mm-dd, mm/dd/yyyy and more.',
+      };
+    }
+    return { trips, error: null };
   });
+
+  protected trips = computed(() => this.parsedResult().trips);
+  protected parseError = computed(() => this.parsedResult().error);
 
   protected analysisRows = computed<AnalysisRow[]>(() => {
     const trips = this.trips();

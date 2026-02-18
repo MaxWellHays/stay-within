@@ -35,15 +35,23 @@
 }
 
 .status-details {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
     margin-bottom: 16px;
     font-size: 0.9em;
 }
 
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+}
+
 .detail-label {
     color: #666;
+    flex-shrink: 0;
 }
 
 .detail-value {
@@ -102,9 +110,10 @@
     color: #dc2626;
 }
 
-@media (max-width: 500px) {
-    .status-details {
-        grid-template-columns: 1fr;
+@media (max-width: 480px) {
+    .detail-row {
+        flex-direction: column;
+        gap: 2px;
     }
 
     .detail-value {
