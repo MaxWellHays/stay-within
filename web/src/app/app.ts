@@ -6,6 +6,7 @@ import { TripTable } from './components/trip-table/trip-table';
 import { Config, Trip, AnalysisRow, StatusResult } from './models/trip.model';
 import { CsvParserService } from './services/csv-parser.service';
 import { CalculatorService } from './services/calculator.service';
+import { FaviconService } from './services/favicon.service';
 
 const STORAGE_KEY = 'stay-within-trip-data';
 
@@ -22,7 +23,9 @@ export class App {
   constructor(
     private csvParser: CsvParserService,
     private calculator: CalculatorService,
+    faviconService: FaviconService,
   ) {
+    faviconService.init();
     // Persist trip text to localStorage whenever it changes
     effect(() => {
       localStorage.setItem(STORAGE_KEY, this.tripText());
