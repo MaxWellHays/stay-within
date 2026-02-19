@@ -34,7 +34,8 @@ export class CsvParserService {
       const msPerDay = 24 * 60 * 60 * 1000;
       const days = Math.floor((endDate.getTime() - startDate.getTime()) / msPerDay) + 1;
 
-      trips.push({ start: startDate, end: endDate, days });
+      const notes = cells.length > 2 ? cells[2].trim() || undefined : undefined;
+      trips.push({ start: startDate, end: endDate, days, notes });
     }
 
     // Sort by end date

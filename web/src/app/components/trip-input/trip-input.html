@@ -1,9 +1,120 @@
 <div class="trip-input">
+
+    <!-- Toolbar -->
     <div class="input-header">
-        <span class="input-label">Trip data (CSV or paste from spreadsheet)</span>
+        <span class="input-label">Trip data</span>
         <div class="input-actions">
             <button class="btn btn-sm" (click)="loadExample()">Load Example</button>
-            <button class="btn btn-sm" (click)="onFileClick()">Upload CSV</button>
+            <button class="btn btn-sm" (click)="clear()">Clear</button>
+            @if (hasData()) {
+                <button class="btn btn-sm" (click)="exportCsv()">Export CSV</button>
+            }
+        </div>
+    </div>
+
+    <!-- Mode tabs -->
+    <div class="mode-tabs">
+        <button class="mode-tab" [class.active]="mode() === 'text'" (click)="setMode('text')">
+            Free text
+        </button>
+        <button class="mode-tab" [class.active]="mode() === 'table'" (click)="setMode('table')">
+            Table
+        </button>
+        <button class="mode-tab" [class.active]="mode() === 'file'" (click)="setMode('file')">
+            Import file
+        </button>
+    </div>
+
+    <!-- ── Text mode ─────────────────────────────────────────────────────── -->
+    @if (mode() === 'text') {
+        <textarea
+            #textareaEl
+            class="trip-textarea"
+            placeholder="Paste your trip data here, one row per trip:&#10;&#10;Start,End,Notes&#10;25.05.2023,10.08.2023,Summer holiday&#10;15.09.2023,20.09.2023&#10;&#10;Supported formats: dd.mm.yyyy  yyyy-mm-dd  mm/dd/yyyy  and more."
+            rows="12"
+            (input)="onTextInput($event)"
+        ></textarea>
+    }
+
+    <!-- ── Table mode ────────────────────────────────────────────────────── -->
+    @if (mode() === 'table') {
+        <div class="table-editor">
+            <div class="table-scroll">
+                <table class="edit-table">
+                    <thead>
+                        <tr>
+                            <th>Start date</th>
+                            <th>End date</th>
+                            <th class="num">Days</th>
+                            <th>Notes</th>
+                            <th class="del-col"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (row of tableRows(); track $index; let i = $index) {
+                            <tr>
+                                <td>
+                                    <input
+                                        type="date"
+                                        class="date-input"
+                                        [value]="row.startStr"
+                                        (change)="onDateChange(i, 'startStr', $event)"
+                                    />
+                                </td>
+                                <td>
+                                    <input
+                                        type="date"
+                                        class="date-input"
+                                        [value]="row.endStr"
+                                        (change)="onDateChange(i, 'endStr', $event)"
+                                    />
+                                </td>
+                                <td class="num days-cell">
+                                    {{ computeRowDays(row) ?? '—' }}
+                                </td>
+                                <td>
+                                    <input
+                                        type="text"
+                                        class="notes-input"
+                                        placeholder="Optional"
+                                        [value]="row.notes"
+                                        (input)="onNotesChange(i, $event)"
+                                    />
+                                </td>
+                                <td class="del-col">
+                                    <button
+                                        class="delete-row-btn"
+                                        (click)="deleteRow(i)"
+                                        title="Remove row"
+                                    >✕</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <button class="btn btn-sm add-row-btn" (click)="addRow()">+ Add trip</button>
+        </div>
+    }
+
+    <!-- ── File / drag-and-drop mode ─────────────────────────────────────── -->
+    @if (mode() === 'file') {
+        <div
+            class="drop-zone"
+            [class.dragging]="dragging()"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave()"
+            (drop)="onDrop($event)"
+        >
+            <div class="drop-zone-content">
+                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+                <p class="drop-hint">Drop a CSV file here</p>
+                <span class="drop-or">or</span>
+                <button class="btn" (click)="onFileClick()">Choose file</button>
+                <p class="drop-formats">Accepts .csv · .tsv · .txt</p>
+            </div>
             <input
                 #fileInput
                 type="file"
@@ -12,17 +123,6 @@
                 (change)="onFileSelected($event)"
             />
         </div>
-    </div>
+    }
 
-    <textarea
-        class="trip-textarea"
-        [class.drag-over]="dragOver"
-        placeholder="Paste your trip data here (Start date, End date)&#10;&#10;Example:&#10;25.05.2023,10.08.2023&#10;15.09.2023,20.09.2023&#10;&#10;Or drag and drop a CSV file"
-        rows="12"
-        [(ngModel)]="tripText"
-        (ngModelChange)="onTextChange()"
-        (dragover)="onDragOver($event)"
-        (dragleave)="onDragLeave()"
-        (drop)="onDrop($event)"
-    ></textarea>
 </div>

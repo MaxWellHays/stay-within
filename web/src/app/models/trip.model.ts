@@ -2,6 +2,7 @@ export interface Trip {
   start: Date;
   end: Date;
   days: number;
+  notes?: string;
 }
 
 export interface Config {

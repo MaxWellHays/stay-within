@@ -6,6 +6,9 @@
                 <tr>
                     <th>Trip Start</th>
                     <th>Trip End</th>
+                    @if (hasNotes()) {
+                        <th>Notes</th>
+                    }
                     <th class="num">Days</th>
                     <th class="num">Days in Window</th>
                     <th class="num">Days Remaining</th>
@@ -16,6 +19,9 @@
                 <tr [class.exceeded]="row.daysRemaining < 0">
                     <td>{{ fmt(row.trip.start) }}</td>
                     <td>{{ fmt(row.trip.end) }}</td>
+                    @if (hasNotes()) {
+                        <td class="notes-cell">{{ row.trip.notes ?? '' }}</td>
+                    }
                     <td class="num">{{ row.trip.days }}</td>
                     <td class="num">{{ row.daysInWindow }}</td>
                     <td class="num" [class.warning]="row.daysRemaining < 0">

@@ -48,3 +48,10 @@
     color: #dc2626;
     font-weight: 600;
 }
+
+.trip-table .notes-cell {
+    color: #666;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
