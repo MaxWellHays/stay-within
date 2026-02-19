@@ -1,6 +1,12 @@
-# Stay Within - Absence Calculator
+# Stay Within – Days Abroad Calculator
 
-Track your days abroad to stay compliant with visa and residency rules. Supports customizable rolling windows and absence limits for any country's requirements.
+A free calculator that tracks days spent outside a country and checks whether your travel history keeps you compliant with visa and residency absence rules:
+
+- **UK Indefinite Leave to Remain (ILR)** — must not exceed 180 days outside the UK in any rolling 12-month period
+- **Schengen tourist visa (90/180-day rule)** — must not exceed 90 days inside the Schengen Area in any rolling 180-day window
+- **US B1/B2 visitor visa** — must not exceed 182 days in any rolling 12-month period
+
+Enter your trip dates, pick the relevant preset, and the tool instantly shows how many days you've used, how many remain, and highlights any window where you've gone over the limit.
 
 ## Web Version
 
@@ -8,10 +14,11 @@ Track your days abroad to stay compliant with visa and residency rules. Supports
 
 **[https://maxwellhays.github.io/stay-within/](https://maxwellhays.github.io/stay-within/)**
 
-- Paste or type your trips, or upload a CSV file
-- Preset rules for UK, Schengen, and US B1/B2
-- Per-trip breakdown table and color-coded status card
-- Data persists in browser localStorage between visits
+- Enter trips manually in a table, paste free-form CSV, or drag and drop a CSV file
+- Preset rules for UK ILR, Schengen, and US B1/B2 — or set a custom window and limit
+- Per-trip breakdown table and colour-coded status card
+- Optional Notes column to label each trip
+- Data persists in your browser between visits — no account required
 
 ## CLI Version
 
@@ -136,15 +143,15 @@ Headers are auto-detected and optional. The tool supports **10 date formats**:
 | `dd-mm-yyyy` | 25-05-2023 |
 | and more... | |
 
-## Common Rules by Country
+## Common Rules
 
-| Country/Visa | Window | Limit |
-|---|---|---|
-| UK (default) | 12 months | 180 days |
-| Schengen | 6 months | 90 days |
-| US B1/B2 | 12 months | 182 days |
+| Visa / Residency | Rolling Window | Absence Limit | Notes |
+|---|---|---|---|
+| UK ILR | 12 months | 180 days | Exceeding this can affect your ILR application |
+| Schengen tourist visa | 180 days | 90 days | The 90/180-day rule applies across the whole Schengen Area |
+| US B1/B2 visitor visa | 12 months | 182 days | Approximate — CBP retains discretion at the border |
 
-**This tool is for tracking purposes only. Consult with immigration or tax professionals for official guidance.**
+**This tool is for tracking purposes only. Always consult an immigration lawyer or tax professional for official guidance.**
 
 ## Repository Structure
 
