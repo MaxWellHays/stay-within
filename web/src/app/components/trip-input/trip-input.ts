@@ -1,5 +1,6 @@
 import {
   Component,
+  OnInit,
   model,
   output,
   ElementRef,
@@ -73,11 +74,15 @@ const EXAMPLE_DATA = `Start,End,Notes
   templateUrl: './trip-input.html',
   styleUrl: './trip-input.css',
 })
-export class TripInput {
+export class TripInput implements OnInit {
   tripText = model('');
   textChanged = output<string>();
 
-  protected mode = signal<InputMode>('table');
+  private static readonly MODE_KEY = 'stay-within-input-mode';
+
+  protected mode = signal<InputMode>(
+    (localStorage.getItem(TripInput.MODE_KEY) as InputMode | null) ?? 'table',
+  );
   protected tableRows = signal<TableRow[]>([emptyRow()]);
   protected dragging = signal(false);
   protected computeRowDays = rowDays;
@@ -102,6 +107,19 @@ export class TripInput {
     });
   }
 
+  ngOnInit(): void {
+    // If the persisted mode is 'table', populate tableRows from the tripText
+    // that the parent has already restored from localStorage. Without this,
+    // tableRows stays at [emptyRow()] because setMode('table') is never called
+    // when the mode hasn't changed.
+    if (this.mode() === 'table') {
+      const trips = this.csvParser.parseTripsFromText(this.tripText());
+      if (trips.length > 0) {
+        this.tableRows.set(trips.map(tripToRow));
+      }
+    }
+  }
+
   // ── Mode switching ────────────────────────────────────────────────────────
 
   setMode(newMode: InputMode): void {
@@ -119,6 +137,7 @@ export class TripInput {
     }
 
     this.mode.set(newMode);
+    localStorage.setItem(TripInput.MODE_KEY, newMode);
   }
 
   // ── Toolbar actions ───────────────────────────────────────────────────────
