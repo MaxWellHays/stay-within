@@ -14,11 +14,11 @@
 
     <!-- Mode tabs -->
     <div class="mode-tabs">
-        <button class="mode-tab" [class.active]="mode() === 'text'" (click)="setMode('text')">
-            Free text
-        </button>
         <button class="mode-tab" [class.active]="mode() === 'table'" (click)="setMode('table')">
             Table
+        </button>
+        <button class="mode-tab" [class.active]="mode() === 'text'" (click)="setMode('text')">
+            Free text
         </button>
         <button class="mode-tab" [class.active]="mode() === 'file'" (click)="setMode('file')">
             Import file
@@ -52,10 +52,11 @@
                     </thead>
                     <tbody>
                         @for (row of tableRows(); track $index; let i = $index) {
-                            <tr>
+                            <tr [class.invalid-row]="isRowInvalid(row)">
                                 <td>
                                     <input
                                         type="date"
+                                        lang="en-GB"
                                         class="date-input"
                                         [value]="row.startStr"
                                         (change)="onDateChange(i, 'startStr', $event)"
@@ -64,6 +65,7 @@
                                 <td>
                                     <input
                                         type="date"
+                                        lang="en-GB"
                                         class="date-input"
                                         [value]="row.endStr"
                                         (change)="onDateChange(i, 'endStr', $event)"

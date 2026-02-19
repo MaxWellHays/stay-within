@@ -77,10 +77,12 @@ export class TripInput {
   tripText = model('');
   textChanged = output<string>();
 
-  protected mode = signal<InputMode>('text');
+  protected mode = signal<InputMode>('table');
   protected tableRows = signal<TableRow[]>([emptyRow()]);
   protected dragging = signal(false);
   protected computeRowDays = rowDays;
+  protected isRowInvalid = (row: TableRow) =>
+    !!row.startStr && !!row.endStr && rowDays(row) === null;
 
   private fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
   private textareaEl = viewChild<ElementRef<HTMLTextAreaElement>>('textareaEl');

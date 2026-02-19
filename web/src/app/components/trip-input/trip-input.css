@@ -148,6 +148,14 @@
     background: #f9fafb;
 }
 
+.edit-table tbody tr.invalid-row {
+    background: #fef2f2;
+}
+
+.edit-table tbody tr.invalid-row:hover {
+    background: #fee2e2;
+}
+
 .date-input {
     width: 100%;
     padding: 7px 10px;
