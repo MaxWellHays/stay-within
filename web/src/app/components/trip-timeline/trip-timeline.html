@@ -27,7 +27,10 @@
                 [attr.y]="bar.lane * LANE_STEP"
                 [attr.width]="bar.width"
                 [attr.height]="BAR_HEIGHT"
-                [attr.fill]="bar.color"
+                [attr.fill]="hoveredTrip() === bar.trip ? bar.tripColor.barHover : (bar.inWindow ? bar.tripColor.bar : bar.tripColor.barFaded)"
+                [attr.opacity]="hoveredTrip() === bar.trip ? 1 : (bar.inWindow ? 1 : 0.7)"
+                [attr.stroke]="hoveredTrip() === bar.trip ? '#374151' : 'none'"
+                [attr.stroke-width]="hoveredTrip() === bar.trip ? 1.5 : 0"
                 rx="3"
             >
                 <title>
@@ -45,23 +48,23 @@
             </text>
             } @if (bar.noteRow >= 0) {
             <g
-                [attr.transform]="'translate(' + (bar.x + bar.width / 2) + ',' + (-(bar.noteRow * NOTE_ROW_HEIGHT) - 16) + ')'"
+                [attr.transform]="'translate(' + bar.x + ',' + (-(bar.noteRow * NOTE_ROW_HEIGHT) - 16) + ')'"
             >
                 <rect
                     class="note-badge-bg"
-                    [attr.x]="-(bar.noteWidth / 2)"
+                    x="0"
                     y="0"
                     [attr.width]="bar.noteWidth"
                     height="14"
                     rx="3"
-                    [attr.fill]="bar.inWindow ? '#f8faff' : '#f9fafb'"
-                    [attr.stroke]="bar.inWindow ? '#bfdbfe' : '#e5e7eb'"
+                    [attr.fill]="hoveredTrip() === bar.trip ? bar.tripColor.badgeBgHover : (bar.inWindow ? bar.tripColor.badgeBg : bar.tripColor.badgeBgFaded)"
+                    [attr.stroke]="hoveredTrip() === bar.trip ? bar.tripColor.badgeStrokeHover : (bar.inWindow ? bar.tripColor.badgeStroke : bar.tripColor.badgeStrokeFaded)"
                 />
                 <text
                     class="bar-note"
-                    x="0"
+                    [attr.x]="bar.noteWidth / 2"
                     y="11"
-                    [attr.fill]="bar.inWindow ? '#60a5fa' : '#9ca3af'"
+                    [attr.fill]="hoveredTrip() === bar.trip ? bar.tripColor.badgeTextHover : (bar.inWindow ? bar.tripColor.badgeText : bar.tripColor.badgeTextFaded)"
                 >
                     {{ bar.trip.notes }}
                 </text>
