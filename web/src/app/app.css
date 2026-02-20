@@ -27,6 +27,33 @@
     margin-bottom: 24px;
 }
 
+.app-footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+}
+
+.github-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #888;
+    font-size: 0.85em;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.github-link:hover {
+    color: #111;
+}
+
+.github-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
 .parse-error {
     padding: 12px 16px;
     background: #fef2f2;
