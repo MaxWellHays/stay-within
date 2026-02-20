@@ -17,7 +17,7 @@ import { CalculatorService } from '../../services/calculator.service';
 // ── Layout constants ──────────────────────────────────────────────────────────
 
 const MARGIN_TOP_BASE = 12;
-const NOTE_ROW_HEIGHT = 14;
+const NOTE_ROW_HEIGHT = 18;
 const WINDOW_LABEL_ROW = 38; // vertical space for first badge row (includes 2-line stats badge)
 const STATS_ROW_HEIGHT = 34; // extra row when stats don't fit between badges
 const MARGIN = { right: 16, bottom: 36, left: 16 };
@@ -47,6 +47,7 @@ export interface TripBar {
   trip: Trip;
   labelVisible: boolean;
   noteRow: number; // 0-based row index for stacking note labels; -1 = no note
+  noteWidth: number; // estimated pixel width of the note badge
 }
 
 export interface AxisTick {
@@ -209,6 +210,7 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
         trip,
         labelVisible: width >= MIN_LABEL_WIDTH,
         noteRow: -1,
+        noteWidth: 0,
       };
     });
   });
@@ -216,7 +218,7 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
   // ── Note row stacking (greedy, left-to-right) ────────────────────────────
 
   private NOTE_CHAR_WIDTH = 6; // approximate px per character at 10px font
-  private NOTE_PAD = 8; // extra horizontal padding around note text
+  private NOTE_PAD = 12; // horizontal padding inside note badge
 
   protected tripBarsWithNotes = computed<TripBar[]>(() => {
     const bars = this.tripBars();
@@ -229,7 +231,7 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
       .filter(({ bar }) => !!bar.trip.notes)
       .sort((a, b) => a.bar.x - b.bar.x);
 
-    const noteRows = new Map<number, number>();
+    const noteData = new Map<number, { row: number; width: number }>();
     for (const { bar, idx } of sorted) {
       const centerX = bar.x + bar.width / 2;
       const labelWidth = bar.trip.notes!.length * this.NOTE_CHAR_WIDTH + this.NOTE_PAD;
@@ -242,12 +244,13 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
         rowEndXs.push(0);
       }
       rowEndXs[row] = rightX;
-      noteRows.set(idx, row);
+      noteData.set(idx, { row, width: labelWidth });
     }
 
     return bars.map((bar, i) => ({
       ...bar,
-      noteRow: noteRows.get(i) ?? -1,
+      noteRow: noteData.get(i)?.row ?? -1,
+      noteWidth: noteData.get(i)?.width ?? 0,
     }));
   });
 

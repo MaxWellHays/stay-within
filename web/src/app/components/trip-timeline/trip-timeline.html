@@ -44,14 +44,28 @@
                 {{ bar.trip.days }}d
             </text>
             } @if (bar.noteRow >= 0) {
-            <text
-                class="bar-note"
-                [attr.x]="bar.x + bar.width / 2"
-                [attr.y]="-(bar.noteRow * NOTE_ROW_HEIGHT) - 4"
-                [attr.fill]="bar.color"
+            <g
+                [attr.transform]="'translate(' + (bar.x + bar.width / 2) + ',' + (-(bar.noteRow * NOTE_ROW_HEIGHT) - 16) + ')'"
             >
-                {{ bar.trip.notes }}
-            </text>
+                <rect
+                    class="note-badge-bg"
+                    [attr.x]="-(bar.noteWidth / 2)"
+                    y="0"
+                    [attr.width]="bar.noteWidth"
+                    height="14"
+                    rx="3"
+                    [attr.fill]="bar.inWindow ? '#f8faff' : '#f9fafb'"
+                    [attr.stroke]="bar.inWindow ? '#bfdbfe' : '#e5e7eb'"
+                />
+                <text
+                    class="bar-note"
+                    x="0"
+                    y="11"
+                    [attr.fill]="bar.inWindow ? '#60a5fa' : '#9ca3af'"
+                >
+                    {{ bar.trip.notes }}
+                </text>
+            </g>
             } }
 
             <!-- Window start vertical marker -->
@@ -166,9 +180,9 @@
             <rect
                 class="hover-overlay"
                 x="0"
-                y="0"
+                [attr.y]="-(marginTop())"
                 [attr.width]="innerWidth()"
-                [attr.height]="svgHeight() - marginTop()"
+                [attr.height]="svgHeight()"
                 (mousemove)="onMouseMove($event)"
             />
         </g>

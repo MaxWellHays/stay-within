@@ -67,6 +67,11 @@
     text-anchor: middle;
 }
 
+.note-badge-bg {
+    stroke-width: 0.5;
+    pointer-events: none;
+}
+
 .bar-note {
     font-size: 10px;
     text-anchor: middle;
