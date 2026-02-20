@@ -265,13 +265,14 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
     let prevAnchorX = -Infinity;
     let prevBadgeHeight = NOTE_BADGE_HEIGHT;
     for (const { bar, idx } of noted) {
-      const minX = prevAnchorX + prevBadgeHeight * (SIN45 + SIN45) + NOTE_GAP;
+      const currentBadgeHeight = bar.trip === hoveredTrip ? NOTE_BADGE_HEIGHT_HOVER : NOTE_BADGE_HEIGHT;
+      const minX = prevAnchorX + (prevBadgeHeight + currentBadgeHeight) * SIN45 + NOTE_GAP;
       if (bar.noteX < minX) {
         bar.noteX = minX;
         withNotes[idx] = bar;
       }
       prevAnchorX = bar.noteX;
-      prevBadgeHeight = bar.trip === hoveredTrip ? NOTE_BADGE_HEIGHT_HOVER : NOTE_BADGE_HEIGHT;
+      prevBadgeHeight = currentBadgeHeight;
     }
 
     return withNotes;
