@@ -16,7 +16,7 @@
                 [attr.x]="windowRect().x"
                 [attr.y]="0"
                 [attr.width]="windowRect().width"
-                [attr.height]="svgHeight() - marginTop() - MARGIN.bottom"
+                [attr.height]="barAreaHeight()"
             />
 
             <!-- Trip bars -->
@@ -61,7 +61,7 @@
                 [attr.x1]="windowStartX()"
                 [attr.x2]="windowStartX()"
                 [attr.y1]="0"
-                [attr.y2]="svgHeight() - marginTop() - MARGIN.bottom"
+                [attr.y2]="barAreaHeight()"
             />
             }
 
@@ -72,7 +72,7 @@
                 [attr.x1]="windowEndX()"
                 [attr.x2]="windowEndX()"
                 [attr.y1]="0"
-                [attr.y2]="svgHeight() - marginTop() - MARGIN.bottom"
+                [attr.y2]="barAreaHeight()"
             />
             }
 
@@ -83,9 +83,43 @@
                 [attr.x1]="todayX()"
                 [attr.x2]="todayX()"
                 [attr.y1]="0"
-                [attr.y2]="svgHeight() - marginTop() - MARGIN.bottom"
+                [attr.y2]="barAreaHeight()"
             />
             }
+
+            <!-- Floating window date badges (always visible, clamped to edges) -->
+            <g
+                class="window-badge"
+                [attr.transform]="'translate(' + startBadgeX() + ',' + (barAreaHeight() + 6) + ')'"
+            >
+                @if (startBadgeArrowVisible()) {
+                <polygon
+                    class="window-badge-arrow"
+                    [attr.transform]="'translate(' + (windowStartX() - startBadgeX()) + ',0)'"
+                    points="-4,0 0,-5 4,0"
+                />
+                }
+                <rect class="window-badge-bg" x="-36" y="0" width="72" height="18" rx="3" />
+                <text class="window-badge-text" x="0" y="13">
+                    {{ formatDate(activeWindowStart()) }}
+                </text>
+            </g>
+            <g
+                class="window-badge"
+                [attr.transform]="'translate(' + endBadgeX() + ',' + (barAreaHeight() + 6) + ')'"
+            >
+                @if (endBadgeArrowVisible()) {
+                <polygon
+                    class="window-badge-arrow"
+                    [attr.transform]="'translate(' + (windowEndX() - endBadgeX()) + ',0)'"
+                    points="-4,0 0,-5 4,0"
+                />
+                }
+                <rect class="window-badge-bg" x="-36" y="0" width="72" height="18" rx="3" />
+                <text class="window-badge-text" x="0" y="13">
+                    {{ formatDate(activeWindowEnd()) }}
+                </text>
+            </g>
 
             <!-- X axis ticks and labels -->
             @for (tick of axisTicks(); track tick.label) {
@@ -93,13 +127,13 @@
                 class="axis-tick"
                 [attr.x1]="tick.x"
                 [attr.x2]="tick.x"
-                [attr.y1]="svgHeight() - marginTop() - MARGIN.bottom"
-                [attr.y2]="svgHeight() - marginTop() - MARGIN.bottom + 5"
+                [attr.y1]="barAreaHeight() + WINDOW_LABEL_ROW"
+                [attr.y2]="barAreaHeight() + WINDOW_LABEL_ROW + 5"
             />
             <text
                 class="axis-label"
                 [attr.x]="tick.x"
-                [attr.y]="svgHeight() - marginTop() - MARGIN.bottom + 18"
+                [attr.y]="barAreaHeight() + WINDOW_LABEL_ROW + 18"
             >
                 {{ tick.label }}
             </text>
@@ -119,12 +153,6 @@
 
     <!-- ── Info panel ──────────────────────────────────────────────────────── -->
     <div class="info-panel" [class]="'info-panel info-panel--' + infoStatus()">
-        <div class="info-window">
-            <span class="info-label">Window</span>
-            <span class="info-value"
-                >{{ formatDate(infoWindowStart()) }} → {{ formatDate(infoWindowEnd()) }}</span
-            >
-        </div>
         <div class="info-stats">
             <span class="info-label">Days abroad</span>
             <span class="info-days">

@@ -18,6 +18,7 @@ import { CalculatorService } from '../../services/calculator.service';
 
 const MARGIN_TOP_BASE = 12;
 const NOTE_ROW_HEIGHT = 14;
+const WINDOW_LABEL_ROW = 32; // vertical space for floating window date badges
 const MARGIN = { right: 16, bottom: 36, left: 16 };
 const BAR_HEIGHT = 20;
 const BAR_GAP = 6;
@@ -151,8 +152,10 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
     return MARGIN_TOP_BASE + this.noteRowCount() * NOTE_ROW_HEIGHT;
   });
 
+  protected barAreaHeight = computed(() => this.laneCount() * LANE_STEP);
+
   protected svgHeight = computed(() => {
-    return this.marginTop() + this.laneCount() * LANE_STEP + MARGIN.bottom;
+    return this.marginTop() + this.barAreaHeight() + WINDOW_LABEL_ROW + MARGIN.bottom;
   });
 
   protected innerWidth = computed(() => this.chartWidth() - MARGIN.left - MARGIN.right);
@@ -161,6 +164,7 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
   protected BAR_HEIGHT = BAR_HEIGHT;
   protected LANE_STEP = LANE_STEP;
   protected NOTE_ROW_HEIGHT = NOTE_ROW_HEIGHT;
+  protected WINDOW_LABEL_ROW = WINDOW_LABEL_ROW;
 
   // ── Trip bars ─────────────────────────────────────────────────────────────
 
@@ -270,6 +274,32 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
   protected todayX = computed(() => this.xScale()(utcMidnight(new Date())));
   protected windowStartX = computed(() => this.xScale()(this.activeWindowStart()));
   protected windowEndX = computed(() => this.xScale()(this.activeWindowEnd()));
+
+  // ── Badge positions (clamped to visible area) ─────────────────────────────
+
+  private BADGE_W = 72;
+
+  protected startBadgeX = computed(() => {
+    const x = this.windowStartX();
+    const half = this.BADGE_W / 2;
+    return Math.max(half, Math.min(this.innerWidth() - half, x));
+  });
+
+  protected endBadgeX = computed(() => {
+    const x = this.windowEndX();
+    const half = this.BADGE_W / 2;
+    return Math.max(half, Math.min(this.innerWidth() - half, x));
+  });
+
+  protected startBadgeArrowVisible = computed(() => {
+    const x = this.windowStartX();
+    return x >= 0 && x <= this.innerWidth();
+  });
+
+  protected endBadgeArrowVisible = computed(() => {
+    const x = this.windowEndX();
+    return x >= 0 && x <= this.innerWidth();
+  });
 
   // ── Info panel formatting ─────────────────────────────────────────────────
 

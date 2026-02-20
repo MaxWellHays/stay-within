@@ -73,6 +73,27 @@
     pointer-events: none;
 }
 
+.window-badge {
+    pointer-events: none;
+}
+
+.window-badge-arrow {
+    fill: #2563eb;
+}
+
+.window-badge-bg {
+    fill: #fff;
+    stroke: #2563eb;
+    stroke-width: 1;
+}
+
+.window-badge-text {
+    font-size: 10.5px;
+    fill: #2563eb;
+    text-anchor: middle;
+    font-weight: 500;
+}
+
 .hover-overlay {
     fill: transparent;
     cursor: crosshair;
