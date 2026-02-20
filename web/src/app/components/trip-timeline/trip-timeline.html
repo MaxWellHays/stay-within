@@ -9,18 +9,18 @@
         (touchmove)="onTouchMove($event)"
         (touchend)="onMouseLeave()"
     >
-        <g [attr.transform]="'translate(' + MARGIN.left + ',' + MARGIN.top + ')'">
+        <g [attr.transform]="'translate(' + MARGIN.left + ',' + marginTop() + ')'">
             <!-- Window highlight background -->
             <rect
                 class="window-bg"
                 [attr.x]="windowRect().x"
                 [attr.y]="0"
                 [attr.width]="windowRect().width"
-                [attr.height]="svgHeight() - MARGIN.top - MARGIN.bottom"
+                [attr.height]="svgHeight() - marginTop() - MARGIN.bottom"
             />
 
             <!-- Trip bars -->
-            @for (bar of tripBars(); track bar.trip.start.getTime()) {
+            @for (bar of tripBarsWithNotes(); track bar.trip.start.getTime()) {
             <rect
                 class="trip-bar"
                 [attr.x]="bar.x"
@@ -43,6 +43,15 @@
             >
                 {{ bar.trip.days }}d
             </text>
+            } @if (bar.noteRow >= 0) {
+            <text
+                class="bar-note"
+                [attr.x]="bar.x + bar.width / 2"
+                [attr.y]="-(bar.noteRow * NOTE_ROW_HEIGHT) - 4"
+                [attr.fill]="bar.color"
+            >
+                {{ bar.trip.notes }}
+            </text>
             } }
 
             <!-- Window start vertical marker -->
@@ -52,7 +61,7 @@
                 [attr.x1]="windowStartX()"
                 [attr.x2]="windowStartX()"
                 [attr.y1]="0"
-                [attr.y2]="svgHeight() - MARGIN.top - MARGIN.bottom"
+                [attr.y2]="svgHeight() - marginTop() - MARGIN.bottom"
             />
             }
 
@@ -63,7 +72,7 @@
                 [attr.x1]="windowEndX()"
                 [attr.x2]="windowEndX()"
                 [attr.y1]="0"
-                [attr.y2]="svgHeight() - MARGIN.top - MARGIN.bottom"
+                [attr.y2]="svgHeight() - marginTop() - MARGIN.bottom"
             />
             }
 
@@ -74,7 +83,7 @@
                 [attr.x1]="todayX()"
                 [attr.x2]="todayX()"
                 [attr.y1]="0"
-                [attr.y2]="svgHeight() - MARGIN.top - MARGIN.bottom"
+                [attr.y2]="svgHeight() - marginTop() - MARGIN.bottom"
             />
             }
 
@@ -84,13 +93,13 @@
                 class="axis-tick"
                 [attr.x1]="tick.x"
                 [attr.x2]="tick.x"
-                [attr.y1]="svgHeight() - MARGIN.top - MARGIN.bottom"
-                [attr.y2]="svgHeight() - MARGIN.top - MARGIN.bottom + 5"
+                [attr.y1]="svgHeight() - marginTop() - MARGIN.bottom"
+                [attr.y2]="svgHeight() - marginTop() - MARGIN.bottom + 5"
             />
             <text
                 class="axis-label"
                 [attr.x]="tick.x"
-                [attr.y]="svgHeight() - MARGIN.top - MARGIN.bottom + 18"
+                [attr.y]="svgHeight() - marginTop() - MARGIN.bottom + 18"
             >
                 {{ tick.label }}
             </text>
@@ -102,7 +111,7 @@
                 x="0"
                 y="0"
                 [attr.width]="innerWidth()"
-                [attr.height]="svgHeight() - MARGIN.top - MARGIN.bottom"
+                [attr.height]="svgHeight() - marginTop()"
                 (mousemove)="onMouseMove($event)"
             />
         </g>

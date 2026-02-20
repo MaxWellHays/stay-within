@@ -67,6 +67,12 @@
     text-anchor: middle;
 }
 
+.bar-note {
+    font-size: 10px;
+    text-anchor: middle;
+    pointer-events: none;
+}
+
 .hover-overlay {
     fill: transparent;
     cursor: crosshair;

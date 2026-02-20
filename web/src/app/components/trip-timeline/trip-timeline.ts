@@ -16,7 +16,9 @@ import { CalculatorService } from '../../services/calculator.service';
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 
-const MARGIN = { top: 12, right: 16, bottom: 36, left: 16 };
+const MARGIN_TOP_BASE = 12;
+const NOTE_ROW_HEIGHT = 14;
+const MARGIN = { right: 16, bottom: 36, left: 16 };
 const BAR_HEIGHT = 20;
 const BAR_GAP = 6;
 const LANE_STEP = BAR_HEIGHT + BAR_GAP;
@@ -42,6 +44,7 @@ export interface TripBar {
   color: string;
   trip: Trip;
   labelVisible: boolean;
+  noteRow: number; // 0-based row index for stacking note labels; -1 = no note
 }
 
 export interface AxisTick {
@@ -95,7 +98,11 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
   // ── Active window (hover-driven or status default) ────────────────────────
 
   protected activeWindowEnd = computed<Date>(() => {
-    return this.hoverDate() ?? this.status().windowEnd;
+    const hd = this.hoverDate();
+    if (!hd) return this.status().windowEnd;
+    // Center the rolling window on the cursor: end = hover + half the window
+    const halfMonths = this.config().windowMonths / 2;
+    return this.calculator.addMonths(hd, Math.ceil(halfMonths));
   });
 
   protected activeWindowStart = computed<Date>(() => {
@@ -107,7 +114,7 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
     if (!hd) return this.status();
     return this.calculator.calculateStatus(this.trips(), {
       ...this.config(),
-      customDate: hd,
+      customDate: this.activeWindowEnd(),
     });
   });
 
@@ -140,8 +147,12 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
 
   // ── SVG dimensions ────────────────────────────────────────────────────────
 
+  protected marginTop = computed(() => {
+    return MARGIN_TOP_BASE + this.noteRowCount() * NOTE_ROW_HEIGHT;
+  });
+
   protected svgHeight = computed(() => {
-    return MARGIN.top + this.laneCount() * LANE_STEP + MARGIN.bottom;
+    return this.marginTop() + this.laneCount() * LANE_STEP + MARGIN.bottom;
   });
 
   protected innerWidth = computed(() => this.chartWidth() - MARGIN.left - MARGIN.right);
@@ -149,6 +160,7 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
   protected MARGIN = MARGIN;
   protected BAR_HEIGHT = BAR_HEIGHT;
   protected LANE_STEP = LANE_STEP;
+  protected NOTE_ROW_HEIGHT = NOTE_ROW_HEIGHT;
 
   // ── Trip bars ─────────────────────────────────────────────────────────────
 
@@ -177,8 +189,60 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
         color = '#2563eb'; // blue
       }
 
-      return { x, width, lane, inWindow, color, trip, labelVisible: width >= MIN_LABEL_WIDTH };
+      return {
+        x,
+        width,
+        lane,
+        inWindow,
+        color,
+        trip,
+        labelVisible: width >= MIN_LABEL_WIDTH,
+        noteRow: -1,
+      };
     });
+  });
+
+  // ── Note row stacking (greedy, left-to-right) ────────────────────────────
+
+  private NOTE_CHAR_WIDTH = 6; // approximate px per character at 10px font
+  private NOTE_PAD = 8; // extra horizontal padding around note text
+
+  protected tripBarsWithNotes = computed<TripBar[]>(() => {
+    const bars = this.tripBars();
+    // Estimate note label extent for each bar and greedily assign rows
+    const rowEndXs: number[] = []; // tracks rightmost x occupied per row
+
+    // Process bars sorted by x position
+    const sorted = bars
+      .map((b, i) => ({ bar: b, idx: i }))
+      .filter(({ bar }) => !!bar.trip.notes)
+      .sort((a, b) => a.bar.x - b.bar.x);
+
+    const noteRows = new Map<number, number>();
+    for (const { bar, idx } of sorted) {
+      const centerX = bar.x + bar.width / 2;
+      const labelWidth = bar.trip.notes!.length * this.NOTE_CHAR_WIDTH + this.NOTE_PAD;
+      const leftX = centerX - labelWidth / 2;
+      const rightX = centerX + labelWidth / 2;
+
+      let row = rowEndXs.findIndex((endX) => endX <= leftX);
+      if (row === -1) {
+        row = rowEndXs.length;
+        rowEndXs.push(0);
+      }
+      rowEndXs[row] = rightX;
+      noteRows.set(idx, row);
+    }
+
+    return bars.map((bar, i) => ({
+      ...bar,
+      noteRow: noteRows.get(i) ?? -1,
+    }));
+  });
+
+  protected noteRowCount = computed(() => {
+    const maxRow = Math.max(...this.tripBarsWithNotes().map((b) => b.noteRow), -1);
+    return maxRow + 1;
   });
 
   // ── Window rectangle ──────────────────────────────────────────────────────
