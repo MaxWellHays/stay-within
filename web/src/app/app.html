@@ -26,11 +26,24 @@
     <section class="section">
       <app-status-card [status]="status" />
     </section>
+
+    <section class="section">
+      <app-trip-timeline
+        [trips]="trips()"
+        [config]="config()"
+        [status]="status"
+      />
+    </section>
   }
 
   @if (analysisRows().length > 0) {
     <section class="section">
-      <app-trip-table [rows]="analysisRows()" [windowMonths]="windowMonths()" />
+      <details class="details-table">
+        <summary class="details-summary">Per-trip analysis</summary>
+        <div class="details-body">
+          <app-trip-table [rows]="analysisRows()" [windowMonths]="windowMonths()" />
+        </div>
+      </details>
     </section>
   }
 

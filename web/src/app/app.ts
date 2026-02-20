@@ -3,6 +3,7 @@ import { ConfigBar } from './components/config-bar/config-bar';
 import { TripInput } from './components/trip-input/trip-input';
 import { StatusCard } from './components/status-card/status-card';
 import { TripTable } from './components/trip-table/trip-table';
+import { TripTimeline } from './components/trip-timeline/trip-timeline';
 import { Config, Trip, AnalysisRow, StatusResult } from './models/trip.model';
 import { CsvParserService } from './services/csv-parser.service';
 import { CalculatorService } from './services/calculator.service';
@@ -51,12 +52,12 @@ export interface SharedConfig {
 
 @Component({
   selector: 'app-root',
-  imports: [ConfigBar, TripInput, StatusCard, TripTable],
+  imports: [ConfigBar, TripInput, StatusCard, TripTable, TripTimeline],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
 export class App {
-  private config = signal<Config>({ windowMonths: 12, absenceLimit: 180 });
+  protected config = signal<Config>({ windowMonths: 12, absenceLimit: 180 });
   protected tripText = signal(localStorage.getItem(STORAGE_KEY) ?? '');
 
   // Parse the URL hash once on startup.

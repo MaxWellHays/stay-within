@@ -1,0 +1,134 @@
+<div class="timeline-container">
+
+    <!-- ── SVG Chart ───────────────────────────────────────────────────────── -->
+    <svg
+        class="timeline-svg"
+        [attr.width]="chartWidth()"
+        [attr.height]="svgHeight()"
+        (mouseleave)="onMouseLeave()"
+        (touchmove)="onTouchMove($event)"
+        (touchend)="onMouseLeave()"
+    >
+        <g [attr.transform]="'translate(' + MARGIN.left + ',' + MARGIN.top + ')'">
+
+            <!-- Window highlight background -->
+            <rect
+                class="window-bg"
+                [attr.x]="windowRect().x"
+                [attr.y]="0"
+                [attr.width]="windowRect().width"
+                [attr.height]="svgHeight() - MARGIN.top - MARGIN.bottom"
+            />
+
+            <!-- Trip bars -->
+            @for (bar of tripBars(); track bar.trip.start.getTime()) {
+                <rect
+                    class="trip-bar"
+                    [attr.x]="bar.x"
+                    [attr.y]="bar.lane * LANE_STEP"
+                    [attr.width]="bar.width"
+                    [attr.height]="BAR_HEIGHT"
+                    [attr.fill]="bar.color"
+                    rx="3"
+                >
+                    <title>{{ formatDate(bar.trip.start) }} – {{ formatDate(bar.trip.end) }}{{ bar.trip.notes ? ' · ' + bar.trip.notes : '' }} ({{ bar.trip.days }} days)</title>
+                </rect>
+                @if (bar.labelVisible) {
+                    <text
+                        class="bar-label"
+                        [attr.x]="bar.x + bar.width / 2"
+                        [attr.y]="bar.lane * LANE_STEP + BAR_HEIGHT / 2 + 4"
+                    >{{ bar.trip.days }}d</text>
+                }
+            }
+
+            <!-- Window start vertical marker -->
+            @if (windowStartX() >= 0 && windowStartX() <= innerWidth()) {
+                <line
+                    class="window-marker window-start-marker"
+                    [attr.x1]="windowStartX()"
+                    [attr.x2]="windowStartX()"
+                    [attr.y1]="0"
+                    [attr.y2]="svgHeight() - MARGIN.top - MARGIN.bottom"
+                />
+            }
+
+            <!-- Window end / today marker -->
+            @if (windowEndX() >= 0 && windowEndX() <= innerWidth()) {
+                <line
+                    class="window-marker window-end-marker"
+                    [attr.x1]="windowEndX()"
+                    [attr.x2]="windowEndX()"
+                    [attr.y1]="0"
+                    [attr.y2]="svgHeight() - MARGIN.top - MARGIN.bottom"
+                />
+            }
+
+            <!-- Today line (only when not hovering) -->
+            @if (!hoverDate() && todayX() >= 0 && todayX() <= innerWidth()) {
+                <line
+                    class="today-marker"
+                    [attr.x1]="todayX()"
+                    [attr.x2]="todayX()"
+                    [attr.y1]="0"
+                    [attr.y2]="svgHeight() - MARGIN.top - MARGIN.bottom"
+                />
+            }
+
+            <!-- X axis ticks and labels -->
+            @for (tick of axisTicks(); track tick.label) {
+                <line
+                    class="axis-tick"
+                    [attr.x1]="tick.x"
+                    [attr.x2]="tick.x"
+                    [attr.y1]="svgHeight() - MARGIN.top - MARGIN.bottom"
+                    [attr.y2]="svgHeight() - MARGIN.top - MARGIN.bottom + 5"
+                />
+                <text
+                    class="axis-label"
+                    [attr.x]="tick.x"
+                    [attr.y]="svgHeight() - MARGIN.top - MARGIN.bottom + 18"
+                >{{ tick.label }}</text>
+            }
+
+            <!-- Invisible overlay to capture hover events across the full chart area -->
+            <rect
+                class="hover-overlay"
+                x="0"
+                y="0"
+                [attr.width]="innerWidth()"
+                [attr.height]="svgHeight() - MARGIN.top - MARGIN.bottom"
+                (mousemove)="onMouseMove($event)"
+            />
+
+        </g>
+    </svg>
+
+    <!-- ── Info panel ──────────────────────────────────────────────────────── -->
+    <div class="info-panel" [class]="'info-panel info-panel--' + infoStatus()">
+        <div class="info-window">
+            <span class="info-label">Window</span>
+            <span class="info-value">{{ formatDate(infoWindowStart()) }} → {{ formatDate(infoWindowEnd()) }}</span>
+        </div>
+        <div class="info-stats">
+            <span class="info-label">Days abroad</span>
+            <span class="info-days">
+                <span class="info-used">{{ infoDaysOutside() }}</span>
+                <span class="info-sep"> / </span>
+                <span class="info-limit">{{ infoLimit() }}</span>
+            </span>
+            <div class="progress-bar">
+                <div
+                    class="progress-fill"
+                    [style.width.%]="progressPct()"
+                    [style.background]="progressColor()"
+                ></div>
+            </div>
+            <span class="status-badge">
+                <span class="status-dot" [style.background]="statusDotColor()"></span>
+                {{ statusLabel() }}
+            </span>
+        </div>
+    </div>
+
+</div>

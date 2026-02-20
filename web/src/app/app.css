@@ -63,3 +63,44 @@
     font-size: 0.9em;
     line-height: 1.5;
 }
+
+/* ── Per-trip analysis disclosure ─────────────────────────────────────────── */
+
+.details-table {
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.details-summary {
+    padding: 10px 14px;
+    font-size: 0.9em;
+    font-weight: 600;
+    color: #555;
+    cursor: pointer;
+    user-select: none;
+    background: #f9fafb;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.details-summary::-webkit-details-marker {
+    display: none;
+}
+
+.details-summary::before {
+    content: '▶';
+    font-size: 0.7em;
+    color: #9ca3af;
+    transition: transform 0.15s;
+}
+
+.details-table[open] .details-summary::before {
+    transform: rotate(90deg);
+}
+
+.details-body {
+    border-top: 1px solid #e5e7eb;
+}
