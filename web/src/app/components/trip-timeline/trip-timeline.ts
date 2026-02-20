@@ -66,7 +66,7 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
   private host = inject(ElementRef<HTMLElement>);
   private resizeObserver: ResizeObserver | null = null;
 
-  protected chartWidth = signal(600); // updated by ResizeObserver
+  protected chartWidth = signal(0); // updated by ResizeObserver; 0 = not yet measured
   protected hoverDate = signal<Date | null>(null);
 
   // ── Date extent (X domain) ────────────────────────────────────────────────
@@ -76,7 +76,7 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
     const today = utcMidnight(new Date());
     const [earliest, latest] = extent(trips, (t) => t.start.getTime());
     const start = earliest != null ? new Date(earliest) : today;
-    const end = latest != null ? new Date(Math.max((latest as number), today.getTime())) : today;
+    const end = latest != null ? new Date(Math.max(latest as number, today.getTime())) : today;
     // Add small padding (2% of range) so bars don't touch the edges
     const range = end.getTime() - start.getTime();
     const pad = Math.max(range * 0.02, 7 * 86400000); // at least 7 days
@@ -235,7 +235,11 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
 
   protected statusLabel = computed(() => {
     const s = this.infoStatus();
-    return s === 'exceeded' ? 'Limit exceeded' : s === 'caution' ? 'Approaching limit' : 'Within limit';
+    return s === 'exceeded'
+      ? 'Limit exceeded'
+      : s === 'caution'
+        ? 'Approaching limit'
+        : 'Within limit';
   });
 
   protected statusDotColor = computed(() => {
@@ -269,11 +273,12 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   ngAfterViewInit(): void {
+    const container = this.host.nativeElement.querySelector('.timeline-container');
     this.resizeObserver = new ResizeObserver((entries) => {
       const width = entries[0]?.contentRect.width ?? 0;
       if (width > 0) this.chartWidth.set(width);
     });
-    this.resizeObserver.observe(this.host.nativeElement);
+    this.resizeObserver.observe(container);
   }
 
   ngOnDestroy(): void {

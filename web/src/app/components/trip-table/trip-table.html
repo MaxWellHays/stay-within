@@ -1,5 +1,4 @@
 <div class="trip-table-wrapper">
-    <h3>Per-Trip Analysis (Rolling {{ windowMonths() }}-Month Window)</h3>
     <div class="table-scroll">
         <table class="trip-table">
             <thead>
@@ -7,7 +6,7 @@
                     <th>Trip Start</th>
                     <th>Trip End</th>
                     @if (hasNotes()) {
-                        <th>Notes</th>
+                    <th>Notes</th>
                     }
                     <th class="num">Days</th>
                     <th class="num">Days in Window</th>
@@ -20,7 +19,7 @@
                     <td>{{ fmt(row.trip.start) }}</td>
                     <td>{{ fmt(row.trip.end) }}</td>
                     @if (hasNotes()) {
-                        <td class="notes-cell">{{ row.trip.notes ?? '' }}</td>
+                    <td class="notes-cell">{{ row.trip.notes ?? '' }}</td>
                     }
                     <td class="num">{{ row.trip.days }}</td>
                     <td class="num">{{ row.daysInWindow }}</td>
