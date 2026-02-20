@@ -18,7 +18,8 @@ import { CalculatorService } from '../../services/calculator.service';
 
 const MARGIN_TOP_BASE = 12;
 const NOTE_ROW_HEIGHT = 14;
-const WINDOW_LABEL_ROW = 32; // vertical space for floating window date badges
+const WINDOW_LABEL_ROW = 38; // vertical space for first badge row (includes 2-line stats badge)
+const STATS_ROW_HEIGHT = 34; // extra row when stats don't fit between badges
 const MARGIN = { right: 16, bottom: 36, left: 16 };
 const BAR_HEIGHT = 20;
 const BAR_GAP = 6;
@@ -155,7 +156,13 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
   protected barAreaHeight = computed(() => this.laneCount() * LANE_STEP);
 
   protected svgHeight = computed(() => {
-    return this.marginTop() + this.barAreaHeight() + WINDOW_LABEL_ROW + MARGIN.bottom;
+    return (
+      this.marginTop() +
+      this.barAreaHeight() +
+      WINDOW_LABEL_ROW +
+      this.statsBadgeRowOffset() +
+      MARGIN.bottom
+    );
   });
 
   protected innerWidth = computed(() => this.chartWidth() - MARGIN.left - MARGIN.right);
@@ -301,6 +308,30 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
     return x >= 0 && x <= this.innerWidth();
   });
 
+  // ── Stats badge position ──────────────────────────────────────────────────
+
+  private STATS_W = 90;
+
+  protected statsBadgeFitsInline = computed(() => {
+    const gap = this.endBadgeX() - this.startBadgeX() - this.BADGE_W;
+    return gap >= this.STATS_W;
+  });
+
+  protected statsBadgeX = computed(() => {
+    if (this.statsBadgeFitsInline()) {
+      // Center between the two date badges
+      return (this.startBadgeX() + this.endBadgeX()) / 2;
+    }
+    // Center on the window midpoint, clamped to visible area
+    const windowMidX = (this.windowStartX() + this.windowEndX()) / 2;
+    const half = this.STATS_W / 2;
+    return Math.max(half, Math.min(this.innerWidth() - half, windowMidX));
+  });
+
+  protected statsBadgeRowOffset = computed(() => {
+    return this.statsBadgeFitsInline() ? 0 : STATS_ROW_HEIGHT;
+  });
+
   // ── Info panel formatting ─────────────────────────────────────────────────
 
   protected infoDaysOutside = computed(() => this.activeStatus().totalDaysOutside);
@@ -339,6 +370,21 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
   protected statusDotColor = computed(() => {
     const s = this.infoStatus();
     return s === 'exceeded' ? '#dc2626' : s === 'caution' ? '#d97706' : '#16a34a';
+  });
+
+  protected statsBadgeBg = computed(() => {
+    const s = this.infoStatus();
+    return s === 'exceeded' ? '#fef2f2' : s === 'caution' ? '#fffbeb' : '#f0fdf4';
+  });
+
+  protected statsBadgeStroke = computed(() => {
+    const s = this.infoStatus();
+    return s === 'exceeded' ? '#fca5a5' : s === 'caution' ? '#fcd34d' : '#86efac';
+  });
+
+  protected statsBadgeTextColor = computed(() => {
+    const s = this.infoStatus();
+    return s === 'exceeded' ? '#dc2626' : s === 'caution' ? '#b45309' : '#16a34a';
   });
 
   // ── Hover interaction ─────────────────────────────────────────────────────

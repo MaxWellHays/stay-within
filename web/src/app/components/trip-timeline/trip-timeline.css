@@ -94,96 +94,25 @@
     font-weight: 500;
 }
 
+.stats-badge-bg {
+    stroke-width: 1;
+}
+
+.stats-badge-num {
+    font-size: 11px;
+    text-anchor: middle;
+    font-weight: 600;
+    pointer-events: none;
+}
+
+.stats-badge-label {
+    font-size: 9px;
+    text-anchor: middle;
+    font-weight: 500;
+    pointer-events: none;
+}
+
 .hover-overlay {
     fill: transparent;
     cursor: crosshair;
-}
-
-/* ── Info panel ───────────────────────────────────────────────────────────── */
-
-.info-panel {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 12px 24px;
-    padding: 10px 14px;
-    border-radius: 6px;
-    border: 1px solid #e5e7eb;
-    background: #f9fafb;
-    font-size: 0.88em;
-}
-
-.info-window {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.info-stats {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.info-label {
-    color: #6b7280;
-    font-size: 0.85em;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    font-weight: 500;
-}
-
-.info-value {
-    color: #111;
-    font-variant-numeric: tabular-nums;
-}
-
-.info-days {
-    font-variant-numeric: tabular-nums;
-}
-
-.info-used {
-    font-weight: 600;
-    color: #111;
-}
-
-.info-sep {
-    color: #9ca3af;
-}
-
-.info-limit {
-    color: #6b7280;
-}
-
-.progress-bar {
-    height: 8px;
-    width: 90px;
-    background: #e5e7eb;
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.progress-fill {
-    height: 100%;
-    border-radius: 4px;
-    transition:
-        width 0.15s,
-        background 0.15s;
-}
-
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    color: #374151;
-}
-
-.status-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    transition: background 0.15s;
 }

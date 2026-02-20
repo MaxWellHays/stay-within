@@ -121,19 +121,42 @@
                 </text>
             </g>
 
+            <!-- Floating stats badge -->
+            <g
+                class="window-badge"
+                [attr.transform]="'translate(' + statsBadgeX() + ',' + (barAreaHeight() + 4 + statsBadgeRowOffset()) + ')'"
+            >
+                <rect
+                    class="stats-badge-bg"
+                    x="-44"
+                    y="0"
+                    width="88"
+                    height="30"
+                    rx="4"
+                    [attr.fill]="statsBadgeBg()"
+                    [attr.stroke]="statsBadgeStroke()"
+                />
+                <text class="stats-badge-num" x="0" y="12" [attr.fill]="statsBadgeTextColor()">
+                    {{ infoDaysOutside() }} / {{ infoLimit() }}
+                </text>
+                <text class="stats-badge-label" x="0" y="24" [attr.fill]="statsBadgeTextColor()">
+                    {{ statusLabel() }}
+                </text>
+            </g>
+
             <!-- X axis ticks and labels -->
             @for (tick of axisTicks(); track tick.label) {
             <line
                 class="axis-tick"
                 [attr.x1]="tick.x"
                 [attr.x2]="tick.x"
-                [attr.y1]="barAreaHeight() + WINDOW_LABEL_ROW"
-                [attr.y2]="barAreaHeight() + WINDOW_LABEL_ROW + 5"
+                [attr.y1]="barAreaHeight() + WINDOW_LABEL_ROW + statsBadgeRowOffset()"
+                [attr.y2]="barAreaHeight() + WINDOW_LABEL_ROW + statsBadgeRowOffset() + 5"
             />
             <text
                 class="axis-label"
                 [attr.x]="tick.x"
-                [attr.y]="barAreaHeight() + WINDOW_LABEL_ROW + 18"
+                [attr.y]="barAreaHeight() + WINDOW_LABEL_ROW + statsBadgeRowOffset() + 18"
             >
                 {{ tick.label }}
             </text>
@@ -151,27 +174,5 @@
         </g>
     </svg>
 
-    <!-- ── Info panel ──────────────────────────────────────────────────────── -->
-    <div class="info-panel" [class]="'info-panel info-panel--' + infoStatus()">
-        <div class="info-stats">
-            <span class="info-label">Days abroad</span>
-            <span class="info-days">
-                <span class="info-used">{{ infoDaysOutside() }}</span>
-                <span class="info-sep"> / </span>
-                <span class="info-limit">{{ infoLimit() }}</span>
-            </span>
-            <div class="progress-bar">
-                <div
-                    class="progress-fill"
-                    [style.width.%]="progressPct()"
-                    [style.background]="progressColor()"
-                ></div>
-            </div>
-            <span class="status-badge">
-                <span class="status-dot" [style.background]="statusDotColor()"></span>
-                {{ statusLabel() }}
-            </span>
-        </div>
-    </div>
     }
 </div>
