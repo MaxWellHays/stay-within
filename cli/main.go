@@ -66,8 +66,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Sort trips by end date
+	// Sort trips by end date, then by start date as a tiebreaker so that
+	// the order is deterministic when two trips share the same end date.
 	sort.Slice(trips, func(i, j int) bool {
+		if trips[i].End.Equal(trips[j].End) {
+			return trips[i].Start.Before(trips[j].Start)
+		}
 		return trips[i].End.Before(trips[j].End)
 	})
 

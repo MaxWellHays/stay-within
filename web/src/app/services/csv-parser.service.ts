@@ -38,8 +38,12 @@ export class CsvParserService {
       trips.push({ start: startDate, end: endDate, days, notes });
     }
 
-    // Sort by end date
-    trips.sort((a, b) => a.end.getTime() - b.end.getTime());
+    // Sort by end date, then by start date as a tiebreaker so that the order
+    // is deterministic when two trips share the same end date.
+    trips.sort((a, b) => {
+      const endDiff = a.end.getTime() - b.end.getTime();
+      return endDiff !== 0 ? endDiff : a.start.getTime() - b.start.getTime();
+    });
 
     return trips;
   }

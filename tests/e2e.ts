@@ -42,6 +42,15 @@ interface GoJsonOutput {
   status: GoJsonStatus;
 }
 
+// --- Helpers ---
+
+/** Format a UTC date as dd.mm.yyyy — matches Go CLI JSON output format. */
+function fmtDate(date: Date): string {
+  const d = String(date.getUTCDate()).padStart(2, '0');
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+  return `${d}.${m}.${date.getUTCFullYear()}`;
+}
+
 // --- Test infrastructure ---
 
 const FIXTURES_DIR = resolve(__dirname, 'fixtures');
@@ -143,8 +152,8 @@ for (const tc of testCases) {
     const tsRow = tsResult.analysisRows[i];
     const prefix = `trip[${i}]`;
 
-    assertEqual(`${prefix}.start`, goTrip.start, dateParser.formatDate(tsRow.trip.start));
-    assertEqual(`${prefix}.end`, goTrip.end, dateParser.formatDate(tsRow.trip.end));
+    assertEqual(`${prefix}.start`, goTrip.start, fmtDate(tsRow.trip.start));
+    assertEqual(`${prefix}.end`, goTrip.end, fmtDate(tsRow.trip.end));
     assertEqual(`${prefix}.days`, goTrip.days, tsRow.trip.days);
     assertEqual(`${prefix}.daysInWindow`, goTrip.daysInWindow, tsRow.daysInWindow);
     assertEqual(`${prefix}.daysRemaining`, goTrip.daysRemaining, tsRow.daysRemaining);
@@ -154,11 +163,11 @@ for (const tc of testCases) {
   const goStatus = goResult.status;
   const tsStatus = tsResult.status;
 
-  assertEqual('status.targetDate', goStatus.targetDate, dateParser.formatDate(tsStatus.targetDate));
-  assertEqual('status.lastTripEnd', goStatus.lastTripEnd, dateParser.formatDate(tsStatus.lastTripEnd));
+  assertEqual('status.targetDate', goStatus.targetDate, fmtDate(tsStatus.targetDate));
+  assertEqual('status.lastTripEnd', goStatus.lastTripEnd, fmtDate(tsStatus.lastTripEnd));
   assertEqual('status.daysSinceLastTrip', goStatus.daysSinceLastTrip, tsStatus.daysSinceLastTrip);
-  assertEqual('status.windowStart', goStatus.windowStart, dateParser.formatDate(tsStatus.windowStart));
-  assertEqual('status.windowEnd', goStatus.windowEnd, dateParser.formatDate(tsStatus.windowEnd));
+  assertEqual('status.windowStart', goStatus.windowStart, fmtDate(tsStatus.windowStart));
+  assertEqual('status.windowEnd', goStatus.windowEnd, fmtDate(tsStatus.windowEnd));
   assertEqual('status.totalDaysOutside', goStatus.totalDaysOutside, tsStatus.totalDaysOutside);
   assertEqual('status.daysRemaining', goStatus.daysRemaining, tsStatus.daysRemaining);
   assertEqual('status.status', goStatus.status, tsStatus.status);

@@ -194,11 +194,12 @@ npm run build        # production build → docs/
 
 ### Cross-Implementation Tests
 
-Tests run the Go CLI and the TypeScript services against the same CSV fixtures and compare every output value:
+Tests run the Go CLI and the TypeScript services against the same inputs and compare every output value:
 
 ```bash
 cd tests
-npx tsx e2e.ts
+npx tsx e2e.ts          # fixed fixtures (fast smoke-test)
+npx tsx e2e-random.ts   # 200 random cases, 1-60 trips each (property-based)
 ```
 
 ## License
