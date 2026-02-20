@@ -13,6 +13,7 @@ import {
 } from '@angular/core';
 import { CsvParserService } from '../../services/csv-parser.service';
 import { Trip } from '../../models/trip.model';
+import { TripColor } from '../../utils/trip-colors';
 
 type InputMode = 'text' | 'table' | 'file';
 
@@ -79,6 +80,9 @@ export class TripInput implements OnInit {
   tripText = model('');
   textChanged = output<string>();
   shareUrl = input<string | null>(null);
+  trips = input<Trip[]>([]);
+  tripColors = input<Map<Trip, TripColor>>(new Map());
+  hoveredTrip = model<Trip | null>(null);
 
   protected copyUrlLabel = signal('Copy URL');
 
@@ -293,6 +297,36 @@ export class TripInput implements OnInit {
       return hasNotes ? `${start},${end},${r.notes}` : `${start},${end}`;
     });
     return [header, ...lines].join('\n');
+  }
+
+  // ── Row hover (bidirectional highlight with timeline) ─────────────────────
+
+  /** Returns the Trip corresponding to tableRows()[rowIndex], or null if the row is invalid. */
+  protected getTripForRow(rowIndex: number): Trip | null {
+    const rows = this.tableRows();
+    if (!rows[rowIndex]?.startStr || !rows[rowIndex]?.endStr) return null;
+    // Count valid rows before this index to get the trip index
+    let tripIdx = 0;
+    for (let i = 0; i < rowIndex; i++) {
+      if (rows[i].startStr && rows[i].endStr) tripIdx++;
+    }
+    return this.trips()[tripIdx] ?? null;
+  }
+
+  protected getRowStyle(rowIndex: number): Record<string, string> {
+    const trip = this.getTripForRow(rowIndex);
+    if (!trip || this.hoveredTrip() !== trip) return {};
+    const color = this.tripColors().get(trip);
+    if (!color) return {};
+    return { 'background-color': color.badgeBg, 'border-left-color': color.bar };
+  }
+
+  protected onRowMouseEnter(rowIndex: number): void {
+    this.hoveredTrip.set(this.getTripForRow(rowIndex));
+  }
+
+  protected onRowMouseLeave(): void {
+    this.hoveredTrip.set(null);
   }
 
   private emitFromTable(): void {

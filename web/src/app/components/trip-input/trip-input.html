@@ -58,7 +58,13 @@
                     </thead>
                     <tbody>
                         @for (row of tableRows(); track $index; let i = $index) {
-                            <tr [class.invalid-row]="isRowInvalid(row)">
+                            <tr
+                                [class.invalid-row]="isRowInvalid(row)"
+                                [class.hovered]="hoveredTrip() === getTripForRow(i)"
+                                [style]="getRowStyle(i)"
+                                (mouseenter)="onRowMouseEnter(i)"
+                                (mouseleave)="onRowMouseLeave()"
+                            >
                                 <td>
                                     <input
                                         type="date"

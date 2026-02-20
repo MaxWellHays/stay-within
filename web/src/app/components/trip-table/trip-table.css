@@ -22,6 +22,10 @@
     white-space: nowrap;
 }
 
+.trip-table tbody tr {
+    border-left: 3px solid transparent;
+}
+
 .trip-table th {
     background: #f9fafb;
     font-weight: 600;
@@ -38,6 +42,10 @@
 
 .trip-table tr:hover {
     background: #f9fafb;
+}
+
+.trip-table tr.hovered {
+    font-weight: 500;
 }
 
 .trip-table tr.exceeded {

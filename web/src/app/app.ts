@@ -5,6 +5,7 @@ import { StatusCard } from './components/status-card/status-card';
 import { TripTable } from './components/trip-table/trip-table';
 import { TripTimeline } from './components/trip-timeline/trip-timeline';
 import { Config, Trip, AnalysisRow, StatusResult } from './models/trip.model';
+import { TripColor, computeTripColors } from './utils/trip-colors';
 import { CsvParserService } from './services/csv-parser.service';
 import { CalculatorService } from './services/calculator.service';
 import { FaviconService } from './services/favicon.service';
@@ -59,6 +60,7 @@ export interface SharedConfig {
 export class App {
   protected config = signal<Config>({ windowMonths: 12, absenceLimit: 180 });
   protected tripText = signal(localStorage.getItem(STORAGE_KEY) ?? '');
+  protected hoveredTrip = signal<Trip | null>(null);
 
   // Parse the URL hash once on startup.
   private readonly urlShare = (() => {
@@ -150,6 +152,7 @@ export class App {
   });
 
   protected windowMonths = computed(() => this.config().windowMonths);
+  protected tripColors = computed<Map<Trip, TripColor>>(() => computeTripColors(this.trips()));
 
   onConfigChanged(config: Config) {
     this.config.set(config);

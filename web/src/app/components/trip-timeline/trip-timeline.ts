@@ -1,6 +1,7 @@
 import {
   Component,
   input,
+  model,
   signal,
   computed,
   inject,
@@ -12,6 +13,7 @@ import { scaleTime } from 'd3-scale';
 import { extent } from 'd3-array';
 import { timeFormat } from 'd3-time-format';
 import { Trip, Config, StatusResult } from '../../models/trip.model';
+import { TripColor, computeTripColors } from '../../utils/trip-colors';
 import { CalculatorService } from '../../services/calculator.service';
 
 // ── Layout constants ──────────────────────────────────────────────────────────
@@ -37,82 +39,6 @@ function utcMidnight(date: Date): Date {
 
 function snapToUTCMidnight(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-}
-
-// ── Color palette ────────────────────────────────────────────────────────────
-
-interface TripColor {
-  bar: string;
-  barFaded: string;
-  barHover: string;
-  badgeBg: string;
-  badgeBgFaded: string;
-  badgeBgHover: string;
-  badgeStroke: string;
-  badgeStrokeFaded: string;
-  badgeStrokeHover: string;
-  badgeText: string;
-  badgeTextFaded: string;
-  badgeTextHover: string;
-}
-
-function makeTripColor(base: string, light: string, lighter: string, faded: string): TripColor {
-  return {
-    bar: base,
-    barFaded: faded,
-    barHover: base,
-    badgeBg: lighter,
-    badgeBgFaded: lighter,
-    badgeBgHover: light,
-    badgeStroke: light,
-    badgeStrokeFaded: faded,
-    badgeStrokeHover: base,
-    badgeText: base,
-    badgeTextFaded: light,
-    badgeTextHover: base,
-  };
-}
-
-// Winter: cold blues & purples
-const WINTER_PALETTE: TripColor[] = [
-  makeTripColor('#3b82f6', '#93c5fd', '#eff6ff', '#bfdbfe'),
-  makeTripColor('#6366f1', '#a5b4fc', '#eef2ff', '#c7d2fe'),
-  makeTripColor('#8b5cf6', '#c4b5fd', '#f5f3ff', '#ddd6fe'),
-  makeTripColor('#06b6d4', '#67e8f9', '#ecfeff', '#a5f3fc'),
-];
-
-// Spring: fresh greens & teals
-const SPRING_PALETTE: TripColor[] = [
-  makeTripColor('#10b981', '#6ee7b7', '#ecfdf5', '#a7f3d0'),
-  makeTripColor('#14b8a6', '#5eead4', '#f0fdfa', '#99f6e4'),
-  makeTripColor('#22c55e', '#86efac', '#f0fdf4', '#bbf7d0'),
-  makeTripColor('#84cc16', '#bef264', '#f7fee7', '#d9f99d'),
-];
-
-// Summer: warm oranges, pinks & yellows
-const SUMMER_PALETTE: TripColor[] = [
-  makeTripColor('#f59e0b', '#fcd34d', '#fffbeb', '#fde68a'),
-  makeTripColor('#f97316', '#fdba74', '#fff7ed', '#fed7aa'),
-  makeTripColor('#ef4444', '#fca5a5', '#fef2f2', '#fecaca'),
-  makeTripColor('#ec4899', '#f9a8d4', '#fdf2f8', '#fbcfe8'),
-];
-
-// Fall: earthy reds, ambers & browns
-const FALL_PALETTE: TripColor[] = [
-  makeTripColor('#b45309', '#fbbf24', '#fffbeb', '#fde68a'),
-  makeTripColor('#dc2626', '#f87171', '#fef2f2', '#fecaca'),
-  makeTripColor('#c2410c', '#fb923c', '#fff7ed', '#fed7aa'),
-  makeTripColor('#a16207', '#facc15', '#fefce8', '#fef08a'),
-];
-
-const SEASON_PALETTES = [WINTER_PALETTE, SPRING_PALETTE, SUMMER_PALETTE, FALL_PALETTE];
-
-function getSeason(date: Date): number {
-  const month = date.getUTCMonth(); // 0-11
-  if (month >= 2 && month <= 4) return 1; // Spring: Mar-May
-  if (month >= 5 && month <= 7) return 2; // Summer: Jun-Aug
-  if (month >= 8 && month <= 10) return 3; // Fall: Sep-Nov
-  return 0; // Winter: Dec-Feb
 }
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -156,7 +82,7 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
 
   protected chartWidth = signal(0); // updated by ResizeObserver; 0 = not yet measured
   protected hoverDate = signal<Date | null>(null);
-  protected hoveredTrip = signal<Trip | null>(null);
+  hoveredTrip = model<Trip | null>(null);
 
   // ── Date extent (X domain) ────────────────────────────────────────────────
 
@@ -281,8 +207,7 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
     const wStart = this.activeWindowStart();
     const wEnd = this.activeWindowEnd();
 
-    // Track per-season color index for cycling
-    const seasonCounters = [0, 0, 0, 0];
+    const colorMap = computeTripColors(this.trips());
 
     return this.trips().map((trip) => {
       const x = scale(trip.start);
@@ -290,11 +215,7 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
       const width = Math.max(x2 - x, 2);
       const lane = lanes.get(trip) ?? 0;
       const inWindow = trip.end >= wStart && trip.start <= wEnd;
-
-      const season = getSeason(trip.start);
-      const palette = SEASON_PALETTES[season];
-      const tripColor = palette[seasonCounters[season] % palette.length];
-      seasonCounters[season]++;
+      const tripColor = colorMap.get(trip)!;
 
       return {
         x,

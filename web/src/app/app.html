@@ -13,6 +13,10 @@
       [tripText]="tripText()"
       [shareUrl]="shareUrl()"
       (textChanged)="onTextChanged($event)"
+      [trips]="trips()"
+      [tripColors]="tripColors()"
+      [hoveredTrip]="hoveredTrip()"
+      (hoveredTripChange)="hoveredTrip.set($event)"
     />
   </section>
 
@@ -32,6 +36,8 @@
         [trips]="trips()"
         [config]="config()"
         [status]="status"
+        [hoveredTrip]="hoveredTrip()"
+        (hoveredTripChange)="hoveredTrip.set($event)"
       />
     </section>
   }
@@ -41,7 +47,13 @@
       <details class="details-table">
         <summary class="details-summary">Per-trip analysis</summary>
         <div class="details-body">
-          <app-trip-table [rows]="analysisRows()" [windowMonths]="windowMonths()" />
+          <app-trip-table
+            [rows]="analysisRows()"
+            [windowMonths]="windowMonths()"
+            [tripColors]="tripColors()"
+            [hoveredTrip]="hoveredTrip()"
+            (hoveredTripChange)="hoveredTrip.set($event)"
+          />
         </div>
       </details>
     </section>

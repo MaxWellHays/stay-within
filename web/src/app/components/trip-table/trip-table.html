@@ -15,7 +15,13 @@
             </thead>
             <tbody>
                 @for (row of rows(); track $index) {
-                <tr [class.exceeded]="row.daysRemaining < 0">
+                <tr
+                    [class.exceeded]="row.daysRemaining < 0"
+                    [class.hovered]="hoveredTrip() === row.trip"
+                    [style]="getRowStyle(row.trip)"
+                    (mouseenter)="onRowMouseEnter(row.trip)"
+                    (mouseleave)="onRowMouseLeave()"
+                >
                     <td>{{ fmt(row.trip.start) }}</td>
                     <td>{{ fmt(row.trip.end) }}</td>
                     @if (hasNotes()) {

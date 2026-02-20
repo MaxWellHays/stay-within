@@ -155,12 +155,20 @@
     text-align: right;
 }
 
+.edit-table tbody tr {
+    border-left: 3px solid transparent;
+}
+
 .edit-table tbody tr:last-child td {
     border-bottom: none;
 }
 
 .edit-table tbody tr:hover {
     background: #f9fafb;
+}
+
+.edit-table tbody tr.hovered {
+    font-weight: 500;
 }
 
 .edit-table tbody tr.invalid-row {
