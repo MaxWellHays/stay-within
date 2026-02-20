@@ -17,7 +17,9 @@ import { CalculatorService } from '../../services/calculator.service';
 // ── Layout constants ──────────────────────────────────────────────────────────
 
 const MARGIN_TOP_BASE = 12;
-const NOTE_ROW_HEIGHT = 18;
+const NOTE_ANGLE = -45; // degrees
+const SIN45 = Math.sin(Math.PI / 4); // ≈ 0.707
+const NOTE_BADGE_HEIGHT = 14;
 const WINDOW_LABEL_ROW = 38; // vertical space for first badge row (includes 2-line stats badge)
 const STATS_ROW_HEIGHT = 34; // extra row when stats don't fit between badges
 const MARGIN = { right: 16, bottom: 36, left: 16 };
@@ -228,7 +230,10 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
   // ── SVG dimensions ────────────────────────────────────────────────────────
 
   protected marginTop = computed(() => {
-    return MARGIN_TOP_BASE + this.noteRowCount() * NOTE_ROW_HEIGHT;
+    const maxNoteWidth = Math.max(0, ...this.tripBarsWithNotes().map((b) => b.noteWidth));
+    // The top-right corner of the rotated badge extends upward by noteWidth * sin(45°)
+    const noteHeight = maxNoteWidth > 0 ? maxNoteWidth * SIN45 + 2 : 0;
+    return MARGIN_TOP_BASE + noteHeight;
   });
 
   protected barAreaHeight = computed(() => this.laneCount() * LANE_STEP);
@@ -248,7 +253,9 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
   protected MARGIN = MARGIN;
   protected BAR_HEIGHT = BAR_HEIGHT;
   protected LANE_STEP = LANE_STEP;
-  protected NOTE_ROW_HEIGHT = NOTE_ROW_HEIGHT;
+  protected NOTE_ANGLE = NOTE_ANGLE;
+  protected NOTE_BADGE_HEIGHT = NOTE_BADGE_HEIGHT;
+  protected NOTE_ANCHOR_Y = Math.round(NOTE_BADGE_HEIGHT * SIN45 * 10) / 10; // badge bottom-left offset
   protected WINDOW_LABEL_ROW = WINDOW_LABEL_ROW;
 
   // ── Trip bars ─────────────────────────────────────────────────────────────
@@ -288,47 +295,18 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
     });
   });
 
-  // ── Note row stacking (greedy, left-to-right) ────────────────────────────
+  // ── Note badge sizing ──────────────────────────────────────────────────────
 
   private NOTE_CHAR_WIDTH = 6; // approximate px per character at 10px font
   private NOTE_PAD = 12; // horizontal padding inside note badge
 
   protected tripBarsWithNotes = computed<TripBar[]>(() => {
     const bars = this.tripBars();
-    // Estimate note label extent for each bar and greedily assign rows
-    const rowEndXs: number[] = []; // tracks rightmost x occupied per row
-
-    // Process bars sorted by x position
-    const sorted = bars
-      .map((b, i) => ({ bar: b, idx: i }))
-      .filter(({ bar }) => !!bar.trip.notes)
-      .sort((a, b) => a.bar.x - b.bar.x);
-
-    const noteData = new Map<number, { row: number; width: number }>();
-    for (const { bar, idx } of sorted) {
-      const labelWidth = bar.trip.notes!.length * this.NOTE_CHAR_WIDTH + this.NOTE_PAD;
-      const leftX = bar.x;
-      const rightX = leftX + labelWidth;
-
-      let row = rowEndXs.findIndex((endX) => endX <= leftX);
-      if (row === -1) {
-        row = rowEndXs.length;
-        rowEndXs.push(0);
-      }
-      rowEndXs[row] = rightX;
-      noteData.set(idx, { row, width: labelWidth });
-    }
-
-    return bars.map((bar, i) => ({
-      ...bar,
-      noteRow: noteData.get(i)?.row ?? -1,
-      noteWidth: noteData.get(i)?.width ?? 0,
-    }));
-  });
-
-  protected noteRowCount = computed(() => {
-    const maxRow = Math.max(...this.tripBarsWithNotes().map((b) => b.noteRow), -1);
-    return maxRow + 1;
+    return bars.map((bar) => {
+      if (!bar.trip.notes) return bar;
+      const noteWidth = bar.trip.notes.length * this.NOTE_CHAR_WIDTH + this.NOTE_PAD;
+      return { ...bar, noteRow: 0, noteWidth };
+    });
   });
 
   // ── Window rectangle ──────────────────────────────────────────────────────
@@ -477,10 +455,21 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
       if (x >= bar.x && x <= bar.x + bar.width && y >= barY && y <= barY + BAR_HEIGHT) {
         return true;
       }
-      // Check note badge
+      // Check connector line and rotated note badge
       if (bar.noteRow >= 0) {
-        const noteY = -(bar.noteRow * NOTE_ROW_HEIGHT) - 16;
-        if (x >= bar.x && x <= bar.x + bar.noteWidth && y >= noteY && y <= noteY + 14) {
+        const anchorY = -(NOTE_BADGE_HEIGHT * SIN45);
+        // Connector line hit (within 4px of bar.x, above the bar)
+        if (Math.abs(x - bar.x) <= 4 && y >= anchorY && y < barY) {
+          return true;
+        }
+        // Transform cursor into the badge's rotated coordinate space
+        const dx = x - bar.x;
+        const dy = y - anchorY;
+        const cos45 = SIN45; // cos(45) === sin(45)
+        const sin45 = -SIN45; // sin(-45)
+        const localX = dx * cos45 - dy * sin45;
+        const localY = dx * sin45 + dy * cos45;
+        if (localX >= 0 && localX <= bar.noteWidth && localY >= 0 && localY <= NOTE_BADGE_HEIGHT) {
           return true;
         }
       }

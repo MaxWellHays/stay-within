@@ -63,6 +63,12 @@
     text-anchor: middle;
 }
 
+.note-connector {
+    stroke-width: 1;
+    stroke-dasharray: 2 2;
+    pointer-events: none;
+}
+
 .note-badge-bg {
     stroke-width: 0.5;
     pointer-events: none;

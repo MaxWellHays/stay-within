@@ -47,15 +47,25 @@
                 {{ bar.trip.days }}d
             </text>
             } @if (bar.noteRow >= 0) {
+            <!-- Connector line from bar top to badge anchor -->
+            <line
+                class="note-connector"
+                [attr.x1]="bar.x"
+                [attr.y1]="bar.lane * LANE_STEP"
+                [attr.x2]="bar.x"
+                [attr.y2]="-(NOTE_ANCHOR_Y)"
+                [attr.stroke]="hoveredTrip() === bar.trip ? bar.tripColor.badgeStrokeHover : (bar.inWindow ? bar.tripColor.badgeStroke : bar.tripColor.badgeStrokeFaded)"
+            />
+            <!-- Rotated note badge (bottom-left corner at bar top) -->
             <g
-                [attr.transform]="'translate(' + bar.x + ',' + (-(bar.noteRow * NOTE_ROW_HEIGHT) - 16) + ')'"
+                [attr.transform]="'translate(' + bar.x + ',' + (-(NOTE_ANCHOR_Y)) + ') rotate(' + NOTE_ANGLE + ')'"
             >
                 <rect
                     class="note-badge-bg"
                     x="0"
                     y="0"
                     [attr.width]="bar.noteWidth"
-                    height="14"
+                    [attr.height]="NOTE_BADGE_HEIGHT"
                     rx="3"
                     [attr.fill]="hoveredTrip() === bar.trip ? bar.tripColor.badgeBgHover : (bar.inWindow ? bar.tripColor.badgeBg : bar.tripColor.badgeBgFaded)"
                     [attr.stroke]="hoveredTrip() === bar.trip ? bar.tripColor.badgeStrokeHover : (bar.inWindow ? bar.tripColor.badgeStroke : bar.tripColor.badgeStrokeFaded)"
