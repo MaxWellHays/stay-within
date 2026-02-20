@@ -5,11 +5,15 @@
   </header>
 
   <section class="section">
-    <app-config-bar (configChanged)="onConfigChanged($event)" />
+    <app-config-bar [initialConfig]="sharedConfig" (configChanged)="onConfigChanged($event)" />
   </section>
 
   <section class="section">
-    <app-trip-input [tripText]="tripText()" (textChanged)="onTextChanged($event)" />
+    <app-trip-input
+      [tripText]="tripText()"
+      [shareUrl]="shareUrl()"
+      (textChanged)="onTextChanged($event)"
+    />
   </section>
 
   @if (parseError(); as error) {

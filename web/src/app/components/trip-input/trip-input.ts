@@ -3,6 +3,7 @@ import {
   OnInit,
   model,
   output,
+  input,
   ElementRef,
   viewChild,
   inject,
@@ -77,6 +78,9 @@ const EXAMPLE_DATA = `Start,End,Notes
 export class TripInput implements OnInit {
   tripText = model('');
   textChanged = output<string>();
+  shareUrl = input<string | null>(null);
+
+  protected copyUrlLabel = signal('Copy URL');
 
   private static readonly MODE_KEY = 'stay-within-input-mode';
 
@@ -157,6 +161,18 @@ export class TripInput implements OnInit {
     this.tableRows.set([emptyRow()]);
     this.tripText.set('');
     this.textChanged.emit('');
+  }
+
+  copyUrl(): void {
+    const url = this.shareUrl();
+    if (!url) return;
+    navigator.clipboard.writeText(url).then(
+      () => {
+        this.copyUrlLabel.set('Copied!');
+        setTimeout(() => this.copyUrlLabel.set('Copy URL'), 2000);
+      },
+      () => prompt('Copy this link to share your trips:', url),
+    );
   }
 
   exportCsv(): void {

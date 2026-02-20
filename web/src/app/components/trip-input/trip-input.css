@@ -42,6 +42,21 @@
     font-size: 0.8em;
 }
 
+.btn-copy-url {
+    border-color: #2563eb;
+    color: #2563eb;
+}
+
+.btn-copy-url:hover {
+    background: #eff6ff;
+}
+
+.btn-copy-url.copied {
+    background: #16a34a;
+    border-color: #16a34a;
+    color: #fff;
+}
+
 /* ── Mode tabs ──────────────────────────────────────────────────────────── */
 
 .mode-tabs {

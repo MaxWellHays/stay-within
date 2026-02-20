@@ -8,6 +8,12 @@
             <button class="btn btn-sm" (click)="clear()">Clear</button>
             @if (hasData()) {
                 <button class="btn btn-sm" (click)="exportCsv()">Export CSV</button>
+                <button
+                    class="btn btn-sm btn-copy-url"
+                    [class.copied]="copyUrlLabel() === 'Copied!'"
+                    title="Copy a link to your clipboard — anyone with the link can open this page with your trips pre-loaded"
+                    (click)="copyUrl()"
+                >{{ copyUrlLabel() }}</button>
             }
         </div>
     </div>

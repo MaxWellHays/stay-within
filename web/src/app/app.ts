@@ -10,6 +10,45 @@ import { FaviconService } from './services/favicon.service';
 
 const STORAGE_KEY = 'stay-within-trip-data';
 
+// ── URL share encoding ───────────────────────────────────────────────────────
+
+/** Encode a UTF-8 string to URL-safe base64 (no padding). */
+function encodeShare(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+/** Decode a URL-safe base64 string back to UTF-8. Returns '' on error. */
+function decodeShare(encoded: string): string {
+  try {
+    const b64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  } catch {
+    return '';
+  }
+}
+
+function fmtDateParam(date: Date): string {
+  const d = String(date.getUTCDate()).padStart(2, '0');
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+  return `${d}.${m}.${date.getUTCFullYear()}`;
+}
+
+// ── Shared config type (passed to ConfigBar for one-shot initialization) ────
+
+export interface SharedConfig {
+  windowMonths: number;
+  absenceLimit: number;
+  customDateStr: string;
+}
+
+// ── Component ────────────────────────────────────────────────────────────────
+
 @Component({
   selector: 'app-root',
   imports: [ConfigBar, TripInput, StatusCard, TripTable],
@@ -20,13 +59,60 @@ export class App {
   private config = signal<Config>({ windowMonths: 12, absenceLimit: 180 });
   protected tripText = signal(localStorage.getItem(STORAGE_KEY) ?? '');
 
+  // Parse the URL hash once on startup.
+  private readonly urlShare = (() => {
+    const hash = location.hash.slice(1);
+    if (!hash) return null;
+    const params = new URLSearchParams(hash);
+    const csv = params.get('csv');
+    if (!csv) return null;
+    return {
+      csv: decodeShare(csv),
+      windowMonths: Number(params.get('w')) || null,
+      absenceLimit: Number(params.get('l')) || null,
+      customDateStr: params.get('d') ?? '',
+    };
+  })();
+
+  // Passed to ConfigBar so it can pre-fill its fields when opened via a shared link.
+  protected readonly sharedConfig: SharedConfig | null =
+    this.urlShare
+      ? {
+          windowMonths: this.urlShare.windowMonths ?? 12,
+          absenceLimit: this.urlShare.absenceLimit ?? 180,
+          customDateStr: this.urlShare.customDateStr,
+        }
+      : null;
+
+  // Full shareable URL, or null when there is no data to share.
+  protected shareUrl = computed<string | null>(() => {
+    const text = this.tripText();
+    if (!text.trim()) return null;
+
+    const params = new URLSearchParams();
+    params.set('csv', encodeShare(text));
+
+    const config = this.config();
+    params.set('w', String(config.windowMonths));
+    params.set('l', String(config.absenceLimit));
+    if (config.customDate) params.set('d', fmtDateParam(config.customDate));
+
+    return `${location.origin}${location.pathname}#${params}`;
+  });
+
   constructor(
     private csvParser: CsvParserService,
     private calculator: CalculatorService,
     faviconService: FaviconService,
   ) {
     faviconService.init();
-    // Persist trip text to localStorage whenever it changes
+
+    // If the page was opened via a shared link, prefer that data over localStorage.
+    if (this.urlShare?.csv) {
+      this.tripText.set(this.urlShare.csv);
+    }
+
+    // Persist trip text to localStorage whenever it changes.
     effect(() => {
       localStorage.setItem(STORAGE_KEY, this.tripText());
     });
