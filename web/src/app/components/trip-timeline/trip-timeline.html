@@ -52,13 +52,13 @@
                 class="note-connector"
                 [attr.x1]="bar.x"
                 [attr.y1]="bar.lane * LANE_STEP"
-                [attr.x2]="bar.x"
+                [attr.x2]="bar.noteX"
                 [attr.y2]="-(NOTE_ANCHOR_Y)"
                 [attr.stroke]="hoveredTrip() === bar.trip ? bar.tripColor.badgeStrokeHover : (bar.inWindow ? bar.tripColor.badgeStroke : bar.tripColor.badgeStrokeFaded)"
             />
             <!-- Rotated note badge (bottom-left corner at bar top) -->
             <g
-                [attr.transform]="'translate(' + bar.x + ',' + (-(NOTE_ANCHOR_Y)) + ') rotate(' + NOTE_ANGLE + ')'"
+                [attr.transform]="'translate(' + bar.noteX + ',' + (-(NOTE_ANCHOR_Y)) + ') rotate(' + NOTE_ANGLE + ')'"
             >
                 <rect
                     class="note-badge-bg"
@@ -197,6 +197,7 @@
                 [attr.width]="innerWidth()"
                 [attr.height]="svgHeight()"
                 (mousemove)="onMouseMove($event)"
+                (click)="onDebugClick($event)"
             />
         </g>
     </svg>

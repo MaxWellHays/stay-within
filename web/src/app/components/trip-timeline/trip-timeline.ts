@@ -126,6 +126,7 @@ export interface TripBar {
   labelVisible: boolean;
   noteRow: number; // 0-based row index for stacking note labels; -1 = no note
   noteWidth: number; // estimated pixel width of the note badge
+  noteX: number; // x position of the badge anchor (may be shifted right to avoid overlap)
 }
 
 export interface AxisTick {
@@ -230,9 +231,19 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
   // ── SVG dimensions ────────────────────────────────────────────────────────
 
   protected marginTop = computed(() => {
-    const maxNoteWidth = Math.max(0, ...this.tripBarsWithNotes().map((b) => b.noteWidth));
-    // The top-right corner of the rotated badge extends upward by noteWidth * sin(45°)
-    const noteHeight = maxNoteWidth > 0 ? maxNoteWidth * SIN45 + 2 : 0;
+    // The top-right corner of a rotated badge extends upward by (noteX - barX + noteWidth) * sin(45°)
+    // since the badge is shifted right from the bar, its top corner is higher
+    const bars = this.tripBarsWithNotes();
+    let maxUpward = 0;
+    for (const b of bars) {
+      if (b.noteRow < 0) continue;
+      // Badge anchor is at noteX; its top-right corner is at noteX + noteWidth * cos45 horizontally
+      // and noteWidth * sin45 above the anchor vertically. But since the anchor itself is at
+      // -(NOTE_BADGE_HEIGHT * SIN45) above bar area, we need the max noteWidth * SIN45.
+      const upward = b.noteWidth * SIN45;
+      if (upward > maxUpward) maxUpward = upward;
+    }
+    const noteHeight = maxUpward > 0 ? maxUpward + 2 : 0;
     return MARGIN_TOP_BASE + noteHeight;
   });
 
@@ -291,6 +302,7 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
         labelVisible: width >= MIN_LABEL_WIDTH,
         noteRow: -1,
         noteWidth: 0,
+        noteX: 0,
       };
     });
   });
@@ -302,11 +314,41 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
 
   protected tripBarsWithNotes = computed<TripBar[]>(() => {
     const bars = this.tripBars();
-    return bars.map((bar) => {
+    const NOTE_GAP = 4; // minimum horizontal gap between projected badge extents
+
+    // First pass: compute noteWidth for bars with notes
+    const withNotes = bars.map((bar) => {
       if (!bar.trip.notes) return bar;
       const noteWidth = bar.trip.notes.length * this.NOTE_CHAR_WIDTH + this.NOTE_PAD;
-      return { ...bar, noteRow: 0, noteWidth };
+      return { ...bar, noteRow: 0, noteWidth, noteX: bar.x };
     });
+
+    // Collect only the bars that have notes, sorted by x position
+    const noted = withNotes
+      .map((b, i) => ({ bar: b, idx: i }))
+      .filter(({ bar }) => bar.noteRow >= 0)
+      .sort((a, b) => a.bar.noteX - b.bar.noteX);
+
+    // Second pass: shift badges right to avoid overlap
+    // The badge rect (0,0)→(W,H) is rotated -45° at the anchor point.
+    // Bottom-left corner (0,H) rotated -45° lands at x = H·sin45 right of anchor.
+    // Top-left corner (0,0) is at the anchor itself.
+    // So the next badge's anchor must be past the previous badge's bottom-left,
+    // i.e. spacing = H·sin45 + H·cos45 = H·(sin45+cos45) = H·√2 ≈ H·1.414
+    // because the top-right corner of the next badge (at y=0) would touch the
+    // bottom-left of the previous badge (at y=H rotated).
+    const minSpacing = NOTE_BADGE_HEIGHT * (SIN45 + SIN45) + NOTE_GAP; // H·√2 + gap
+    let prevAnchorX = -Infinity;
+    for (const { bar, idx } of noted) {
+      const minX = prevAnchorX + minSpacing;
+      if (bar.noteX < minX) {
+        bar.noteX = minX;
+        withNotes[idx] = bar;
+      }
+      prevAnchorX = bar.noteX;
+    }
+
+    return withNotes;
   });
 
   // ── Window rectangle ──────────────────────────────────────────────────────
@@ -449,39 +491,59 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
 
     // Find trip bar or note badge under cursor (y is relative to the <g> transform)
     const bars = this.tripBarsWithNotes();
-    const hit = bars.find((bar) => {
-      // Check trip bar
-      const barY = bar.lane * LANE_STEP;
-      if (x >= bar.x && x <= bar.x + bar.width && y >= barY && y <= barY + BAR_HEIGHT) {
-        return true;
-      }
-      // Check connector line and rotated note badge
-      if (bar.noteRow >= 0) {
-        const anchorY = -(NOTE_BADGE_HEIGHT * SIN45);
-        // Connector line hit (within 4px of bar.x, above the bar)
-        if (Math.abs(x - bar.x) <= 4 && y >= anchorY && y < barY) {
-          return true;
-        }
-        // Transform cursor into the badge's rotated coordinate space
-        const dx = x - bar.x;
-        const dy = y - anchorY;
-        const cos45 = SIN45; // cos(45) === sin(45)
-        const sin45 = -SIN45; // sin(-45)
-        const localX = dx * cos45 - dy * sin45;
-        const localY = dx * sin45 + dy * cos45;
-        if (localX >= 0 && localX <= bar.noteWidth && localY >= 0 && localY <= NOTE_BADGE_HEIGHT) {
-          return true;
-        }
-      }
-      return false;
+
+    // Check trip bars first (when cursor is in the bar area)
+    if (y >= 0) {
+      const hit = bars.find((bar) => {
+        const barY = bar.lane * LANE_STEP;
+        return x >= bar.x && x <= bar.x + bar.width && y >= barY && y <= barY + BAR_HEIGHT;
+      });
+      this.hoveredTrip.set(hit?.trip ?? null);
+      return;
+    }
+
+    // Above the bar area: check rotated note badges
+    // The badge is placed at translate(noteX, -NOTE_ANCHOR_Y) rotate(-45).
+    // To test if cursor is inside, apply inverse transform: translate then rotate(+45).
+    const badgeHit = bars.find((bar) => {
+      if (bar.noteRow < 0) return false;
+      const dx = x - bar.noteX;
+      const dy = y + this.NOTE_ANCHOR_Y; // y - (-NOTE_ANCHOR_Y)
+      // Inverse of rotate(-45°): localX = (dx - dy) * SIN45, localY = (dx + dy) * SIN45
+      const localX = (dx - dy) * SIN45;
+      const localY = (dx + dy) * SIN45;
+      return localX >= 0 && localX <= bar.noteWidth && localY >= 0 && localY <= NOTE_BADGE_HEIGHT;
     });
-    this.hoveredTrip.set(hit?.trip ?? null);
+    this.hoveredTrip.set(badgeHit?.trip ?? null);
   }
 
   protected onMouseMove(event: MouseEvent): void {
-    const x = event.offsetX - MARGIN.left;
-    const y = event.offsetY - this.marginTop();
+    const svg = (event.currentTarget as SVGElement).closest('svg')!;
+    const rect = svg.getBoundingClientRect();
+    const x = event.clientX - rect.left - MARGIN.left;
+    const y = event.clientY - rect.top - this.marginTop();
     this.updateHover(x, y);
+  }
+
+  protected onDebugClick(event: MouseEvent): void {
+    const svg = (event.currentTarget as SVGElement).closest('svg')!;
+    const rect = svg.getBoundingClientRect();
+    const x = event.clientX - rect.left - MARGIN.left;
+    const y = event.clientY - rect.top - this.marginTop();
+    console.log(`Click at g-space: (${x.toFixed(1)}, ${y.toFixed(1)})`);
+    const bars = this.tripBarsWithNotes();
+    for (const bar of bars) {
+      if (bar.noteRow < 0) continue;
+      const dx = x - bar.noteX;
+      const dy = y + this.NOTE_ANCHOR_Y;
+      const localX = (dx - dy) * SIN45;
+      const localY = (dx + dy) * SIN45;
+      const hit =
+        localX >= 0 && localX <= bar.noteWidth && localY >= 0 && localY <= NOTE_BADGE_HEIGHT;
+      console.log(
+        `  "${bar.trip.notes}" noteX=${bar.noteX.toFixed(1)} anchorY=${(-this.NOTE_ANCHOR_Y).toFixed(1)} dx=${dx.toFixed(1)} dy=${dy.toFixed(1)} local=(${localX.toFixed(1)},${localY.toFixed(1)}) bounds=(${bar.noteWidth},${NOTE_BADGE_HEIGHT}) ${hit ? 'HIT' : ''}`,
+      );
+    }
   }
 
   protected onMouseLeave(): void {
