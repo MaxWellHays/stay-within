@@ -113,6 +113,8 @@ export class App {
     // If the page was opened via a shared link, prefer that data over localStorage.
     if (this.urlShare?.csv) {
       this.tripText.set(this.urlShare.csv);
+      // Remove the hash from the URL so it doesn't persist after the data is loaded.
+      history.replaceState(null, '', location.pathname);
     }
 
     // Persist trip text to localStorage whenever it changes.
