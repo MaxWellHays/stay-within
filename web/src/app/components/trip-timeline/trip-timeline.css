@@ -80,6 +80,12 @@
     pointer-events: none;
 }
 
+.bar-note-date {
+    font-size: 9px;
+    text-anchor: middle;
+    pointer-events: none;
+}
+
 .window-badge {
     pointer-events: none;
 }

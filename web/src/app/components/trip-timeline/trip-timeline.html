@@ -53,31 +53,41 @@
                 [attr.x1]="bar.x"
                 [attr.y1]="bar.lane * LANE_STEP"
                 [attr.x2]="bar.noteX"
-                [attr.y2]="-(NOTE_ANCHOR_Y)"
+                [attr.y2]="hoveredTrip() === bar.trip ? -(NOTE_ANCHOR_Y_HOVER) : -(NOTE_ANCHOR_Y)"
                 [attr.stroke]="hoveredTrip() === bar.trip ? bar.tripColor.badgeStrokeHover : (bar.inWindow ? bar.tripColor.badgeStroke : bar.tripColor.badgeStrokeFaded)"
             />
-            <!-- Rotated note badge (bottom-left corner at bar top) -->
+            <!-- Rotated note badge; anchor shifts up when hovered so bottom stays at y=0 -->
             <g
-                [attr.transform]="'translate(' + bar.noteX + ',' + (-(NOTE_ANCHOR_Y)) + ') rotate(' + NOTE_ANGLE + ')'"
+                [attr.transform]="'translate(' + bar.noteX + ',' + (hoveredTrip() === bar.trip ? -(NOTE_ANCHOR_Y_HOVER) : -(NOTE_ANCHOR_Y)) + ') rotate(' + NOTE_ANGLE + ')'"
             >
                 <rect
                     class="note-badge-bg"
                     x="0"
                     y="0"
-                    [attr.width]="bar.noteWidth"
-                    [attr.height]="NOTE_BADGE_HEIGHT"
+                    [attr.width]="hoveredTrip() === bar.trip ? bar.noteWidthHover : bar.noteWidth"
+                    [attr.height]="hoveredTrip() === bar.trip ? NOTE_BADGE_HEIGHT_HOVER : NOTE_BADGE_HEIGHT"
                     rx="3"
                     [attr.fill]="hoveredTrip() === bar.trip ? bar.tripColor.badgeBgHover : (bar.inWindow ? bar.tripColor.badgeBg : bar.tripColor.badgeBgFaded)"
                     [attr.stroke]="hoveredTrip() === bar.trip ? bar.tripColor.badgeStrokeHover : (bar.inWindow ? bar.tripColor.badgeStroke : bar.tripColor.badgeStrokeFaded)"
                 />
                 <text
                     class="bar-note"
-                    [attr.x]="bar.noteWidth / 2"
-                    y="11"
+                    [attr.x]="(hoveredTrip() === bar.trip ? bar.noteWidthHover : bar.noteWidth) / 2"
+                    [attr.y]="hoveredTrip() === bar.trip ? 10 : 11"
                     [attr.fill]="hoveredTrip() === bar.trip ? bar.tripColor.badgeTextHover : (bar.inWindow ? bar.tripColor.badgeText : bar.tripColor.badgeTextFaded)"
                 >
                     {{ bar.trip.notes }}
                 </text>
+                @if (hoveredTrip() === bar.trip) {
+                <text
+                    class="bar-note-date"
+                    [attr.x]="bar.noteWidthHover / 2"
+                    y="22"
+                    [attr.fill]="bar.tripColor.badgeTextHover"
+                >
+                    {{ bar.noteDateLabel }}
+                </text>
+                }
             </g>
             } }
 

@@ -20,6 +20,7 @@ const MARGIN_TOP_BASE = 12;
 const NOTE_ANGLE = -45; // degrees
 const SIN45 = Math.sin(Math.PI / 4); // ≈ 0.707
 const NOTE_BADGE_HEIGHT = 14;
+const NOTE_BADGE_HEIGHT_HOVER = 26; // expanded height when badge is hovered
 const WINDOW_LABEL_ROW = 38; // vertical space for first badge row (includes 2-line stats badge)
 const STATS_ROW_HEIGHT = 34; // extra row when stats don't fit between badges
 const MARGIN = { right: 16, bottom: 36, left: 16 };
@@ -126,6 +127,8 @@ export interface TripBar {
   labelVisible: boolean;
   noteRow: number; // 0-based row index for stacking note labels; -1 = no note
   noteWidth: number; // estimated pixel width of the note badge
+  noteWidthHover: number; // badge width when hovered (wider to fit date range)
+  noteDateLabel: string; // compact date range label shown on second line when hovered
   noteX: number; // x position of the badge anchor (may be shifted right to avoid overlap)
 }
 
@@ -237,10 +240,9 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
     let maxUpward = 0;
     for (const b of bars) {
       if (b.noteRow < 0) continue;
-      // Badge anchor is at noteX; its top-right corner is at noteX + noteWidth * cos45 horizontally
-      // and noteWidth * sin45 above the anchor vertically. But since the anchor itself is at
-      // -(NOTE_BADGE_HEIGHT * SIN45) above bar area, we need the max noteWidth * SIN45.
-      const upward = b.noteWidth * SIN45;
+      // Top-right corner of hovered badge is NOTE_ANCHOR_Y_HOVER + noteWidthHover*sin45 above y=0.
+      // Always use hover dimensions so marginTop stays stable when hover changes.
+      const upward = NOTE_BADGE_HEIGHT_HOVER * SIN45 + b.noteWidthHover * SIN45;
       if (upward > maxUpward) maxUpward = upward;
     }
     const noteHeight = maxUpward > 0 ? maxUpward + 2 : 0;
@@ -266,7 +268,9 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
   protected LANE_STEP = LANE_STEP;
   protected NOTE_ANGLE = NOTE_ANGLE;
   protected NOTE_BADGE_HEIGHT = NOTE_BADGE_HEIGHT;
-  protected NOTE_ANCHOR_Y = Math.round(NOTE_BADGE_HEIGHT * SIN45 * 10) / 10; // badge bottom-left offset
+  protected NOTE_BADGE_HEIGHT_HOVER = NOTE_BADGE_HEIGHT_HOVER;
+  protected NOTE_ANCHOR_Y = Math.round(NOTE_BADGE_HEIGHT * SIN45 * 10) / 10;
+  protected NOTE_ANCHOR_Y_HOVER = Math.round(NOTE_BADGE_HEIGHT_HOVER * SIN45 * 10) / 10;
   protected WINDOW_LABEL_ROW = WINDOW_LABEL_ROW;
 
   // ── Trip bars ─────────────────────────────────────────────────────────────
@@ -302,6 +306,8 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
         labelVisible: width >= MIN_LABEL_WIDTH,
         noteRow: -1,
         noteWidth: 0,
+        noteWidthHover: 0,
+        noteDateLabel: '',
         noteX: 0,
       };
     });
@@ -314,13 +320,16 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
 
   protected tripBarsWithNotes = computed<TripBar[]>(() => {
     const bars = this.tripBars();
+    const hoveredTrip = this.hoveredTrip();
     const NOTE_GAP = 4; // minimum horizontal gap between projected badge extents
 
-    // First pass: compute noteWidth for bars with notes
+    // First pass: compute noteWidth, noteWidthHover, noteDateLabel for bars with notes
     const withNotes = bars.map((bar) => {
       if (!bar.trip.notes) return bar;
       const noteWidth = bar.trip.notes.length * this.NOTE_CHAR_WIDTH + this.NOTE_PAD;
-      return { ...bar, noteRow: 0, noteWidth, noteX: bar.x };
+      const dateLabel = this.formatDateRangeBadge(bar.trip.start, bar.trip.end);
+      const noteWidthHover = Math.max(noteWidth, dateLabel.length * this.NOTE_CHAR_WIDTH + this.NOTE_PAD);
+      return { ...bar, noteRow: 0, noteWidth, noteWidthHover, noteDateLabel: dateLabel, noteX: bar.x };
     });
 
     // Collect only the bars that have notes, sorted by x position
@@ -330,22 +339,18 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
       .sort((a, b) => a.bar.noteX - b.bar.noteX);
 
     // Second pass: shift badges right to avoid overlap
-    // The badge rect (0,0)→(W,H) is rotated -45° at the anchor point.
-    // Bottom-left corner (0,H) rotated -45° lands at x = H·sin45 right of anchor.
-    // Top-left corner (0,0) is at the anchor itself.
-    // So the next badge's anchor must be past the previous badge's bottom-left,
-    // i.e. spacing = H·sin45 + H·cos45 = H·(sin45+cos45) = H·√2 ≈ H·1.414
-    // because the top-right corner of the next badge (at y=0) would touch the
-    // bottom-left of the previous badge (at y=H rotated).
-    const minSpacing = NOTE_BADGE_HEIGHT * (SIN45 + SIN45) + NOTE_GAP; // H·√2 + gap
+    // Minimum spacing between anchors = prevBadgeHeight * √2 + gap
+    // When a badge is hovered it expands to NOTE_BADGE_HEIGHT_HOVER, requiring more space.
     let prevAnchorX = -Infinity;
+    let prevBadgeHeight = NOTE_BADGE_HEIGHT;
     for (const { bar, idx } of noted) {
-      const minX = prevAnchorX + minSpacing;
+      const minX = prevAnchorX + prevBadgeHeight * (SIN45 + SIN45) + NOTE_GAP;
       if (bar.noteX < minX) {
         bar.noteX = minX;
         withNotes[idx] = bar;
       }
       prevAnchorX = bar.noteX;
+      prevBadgeHeight = bar.trip === hoveredTrip ? NOTE_BADGE_HEIGHT_HOVER : NOTE_BADGE_HEIGHT;
     }
 
     return withNotes;
@@ -453,6 +458,17 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
     return `${dd}/${mm}/${d.getUTCFullYear()}`;
   }
 
+  private static MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  private formatDateRangeBadge(start: Date, end: Date): string {
+    const s = `${start.getUTCDate()} ${TripTimeline.MONTH_ABBR[start.getUTCMonth()]}`;
+    const e = `${end.getUTCDate()} ${TripTimeline.MONTH_ABBR[end.getUTCMonth()]}`;
+    if (start.getUTCFullYear() === end.getUTCFullYear()) {
+      return `${s} – ${e} ${end.getUTCFullYear()}`;
+    }
+    return `${s} ${start.getUTCFullYear()} – ${e} ${end.getUTCFullYear()}`;
+  }
+
   protected statusLabel = computed(() => {
     const s = this.infoStatus();
     return s === 'exceeded'
@@ -503,16 +519,18 @@ export class TripTimeline implements AfterViewInit, OnDestroy {
     }
 
     // Above the bar area: check rotated note badges
-    // The badge is placed at translate(noteX, -NOTE_ANCHOR_Y) rotate(-45).
-    // To test if cursor is inside, apply inverse transform: translate then rotate(+45).
+    // Use the currently-displayed anchor Y and dimensions (which depend on hover state).
     const badgeHit = bars.find((bar) => {
       if (bar.noteRow < 0) return false;
+      const isHovered = this.hoveredTrip() === bar.trip;
+      const anchorY = isHovered ? this.NOTE_ANCHOR_Y_HOVER : this.NOTE_ANCHOR_Y;
+      const w = isHovered ? bar.noteWidthHover : bar.noteWidth;
+      const h = isHovered ? NOTE_BADGE_HEIGHT_HOVER : NOTE_BADGE_HEIGHT;
       const dx = x - bar.noteX;
-      const dy = y + this.NOTE_ANCHOR_Y; // y - (-NOTE_ANCHOR_Y)
-      // Inverse of rotate(-45°): localX = (dx - dy) * SIN45, localY = (dx + dy) * SIN45
+      const dy = y + anchorY;
       const localX = (dx - dy) * SIN45;
       const localY = (dx + dy) * SIN45;
-      return localX >= 0 && localX <= bar.noteWidth && localY >= 0 && localY <= NOTE_BADGE_HEIGHT;
+      return localX >= 0 && localX <= w && localY >= 0 && localY <= h;
     });
     this.hoveredTrip.set(badgeHit?.trip ?? null);
   }
